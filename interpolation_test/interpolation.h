@@ -1,6 +1,8 @@
 #ifndef INTERPOLATION_HEADER
 #define INTERPOLATION_HEADER
 
+#include "types.h"
+
 void fractionalInterpolation(						\
 	image * picture, uint32_t xPb, uint32_t yPb,	\
 	uint8_t nPbW, uint8_t nPbH,						\

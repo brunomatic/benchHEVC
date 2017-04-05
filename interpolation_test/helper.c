@@ -1,11 +1,12 @@
 
 #define _CRT_SECURE_NO_DEPRECATE
 
+#include "helper.h"
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "types.h"
-#include "helper.h"
+#include "common.h"
 
 #define Clip_RGB(x)		((x < 0 ) ? 0 : ((x > 255) ? 255 : x))
 
@@ -194,12 +195,11 @@ void writeImage(image * img, uint8_t * filename)
 {
 	FILE * file;
 	uint8_t r, g, b;
-	uint32_t temp;
 	uint32_t x, y;
 
 
 	printf("Dumping image in PPM format\n");
-	file = fopen(filename, "wb");
+	file = fopen((char *)filename, "wb");
 	if (!file)
 		return;
 

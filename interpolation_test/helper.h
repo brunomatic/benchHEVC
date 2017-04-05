@@ -2,7 +2,6 @@
 #define HELPER_HEADER
 
 #include "types.h"
-#include "common.h"
 
 void generatePicture(image * picture, uint32_t w, uint32_t h, uint8_t format);
 

@@ -1,4 +1,5 @@
 
+#include "tests.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include "types.h"

@@ -5,26 +5,33 @@ Fractional sample interpolation and transformation benchmark implemented as per 
 // first get rid of those anonying MS warnings
 #define _CRT_SECURE_NO_DEPRECATE
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "common.h"
 #include "benchmark.h"
+#include "tests.h"
 
 
-int main()
+int main(int argc, char **argv)
 {
 	
-	benchTransform(1000000, 4, MODE_INTRA);
-	benchTransform(1000000, 4, MODE_INTER );
-	benchTransform(1000000, 8, MODE_INTER );
-	benchTransform(1000000, 16, MODE_INTER );
-	benchTransform(1000000, 32, MODE_INTER );
-	
+	if(argc > 1){
+		if(argv [1]){
+			testInterpolation();
+			testTransformation();
+		}
+	}
+	else
+	{
+		benchTransform(1000000, 4, MODE_INTRA);
+		benchTransform(1000000, 4, MODE_INTER );
+		benchTransform(1000000, 8, MODE_INTER );
+		benchTransform(1000000, 16, MODE_INTER );
+		benchTransform(1000000, 32, MODE_INTER );
+		
 
-	benchInterpolation(100000, 8, 8);
-	benchInterpolation(100000, 64, 64);
+		benchInterpolation(100000, 8, 8);
+		benchInterpolation(100000, 64, 64);
 
-	getchar();
+	}
 
 	return 0;
 }

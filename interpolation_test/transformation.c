@@ -1,9 +1,7 @@
-#include "stdlib.h"
-#include "types.h"
-#include "types.h"
+#include "transformation.h"
+#include <stdlib.h>
 #include "common.h"
 #include "constants.h"
-#include "transformation.h"
 
 #define USE_BUTTERFLY	1
 #define DEBUG 0
@@ -13,14 +11,29 @@
 	Butterfly algorithms - source: x265 reference source
 	https://bitbucket.org/multicoreware/x265/src/
 */
+void fastForwardDST(const int16_t* block, int16_t* coeff, uint8_t shift);
+void inverseDST(const int16_t* tmp, int16_t* block, uint8_t shift);
+
+void butterfly4(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line);
+void inverseButterfly4(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line);
+
+void butterfly8(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line);
+void inverseButterfly8(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line);
+
+void butterfly16(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line);
+void inverseButterfly16(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line);
+
+void butterfly32(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line);
+void inverseButterfly32(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line);
+
 /*
 	4x4 blocks DST and 
 */
 void fastForwardDST(const int16_t* block, int16_t* coeff, uint8_t shift)
 {
-	int c[4];
+	int i, c[4];
 
-	for (int i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 	{
 		// Intermediate Variables
 		c[0] = block[4 * i + 0] + block[4 * i + 3];

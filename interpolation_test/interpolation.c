@@ -1,6 +1,6 @@
+#include "interpolation.h"
 #include <stdlib.h>
 #include "types.h"
-#include "interpolation.h"
 #include "common.h"
 
 
@@ -50,7 +50,6 @@ void fractionalInterpolation(						\
 	int32_t xInt, yInt;
 	uint8_t xFract, yFract;
 	int8_t x, y;
-	int16_t * ChromaData[2];
 
 	// calculate full and subpixel positions to fetch/interpolate
 	xFract = mvLX[0] & 3;
@@ -219,7 +218,7 @@ int16_t interpolateLumaSample(int32_t x, int32_t y, uint8_t xFract, uint8_t yFra
 */
 void interpolateChromaSample(int32_t x, int32_t y, uint8_t xFract, uint8_t yFract, image * picture, int16_t * CbSample, int16_t * CrSample) 
 {
-	int16_t samples[2][4], result[2] = { 0 }, rowIndex;
+	int16_t samples[2][4], rowIndex;
 	int32_t tempCb = 0, tempCr = 0;
 	uint8_t shift;
 	int8_t i;

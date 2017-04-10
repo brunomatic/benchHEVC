@@ -52,33 +52,38 @@ void testInterpolation()
 /*
 	Function for testing transformation algorithm on a known pattern
 */
-void testTransformation() {
-	
-	int16_t residual[4][4] = {
-		{ -256, -256, -256, -256 },
-		{ -256, -256, -256, -256 },
-		{ -256, -256, -256, -256 },
-		{ -256, -256, -256, -256 }
-	};
-	int16_t * temp, *result;
+void testTransformation(uint8_t size, uint8_t mode) {
 
-	result = (int16_t *)malloc(sizeof(int16_t) * 4 * 4);
-	temp = (int16_t *)malloc(sizeof(int16_t) * 4 * 4);
+	
+	int16_t *residual, *temp, *result;
+	uint8_t i, j;
+
+	residual = (int16_t *)malloc(sizeof(int16_t) * size * size);
+	result = (int16_t *)malloc(sizeof(int16_t) * size * size);
+	temp = (int16_t *)malloc(sizeof(int16_t) * size * size);
+
+	for(i = 0; i < size; i++)
+	{
+		for(j = 0; j < size; j++){
+			residual[i*size + j] = -256;
+		}
+	}
 
 	printf("Residual block:\n");
-	printMatrix((int16_t *)&residual, 4);
-	transform(MODE_INTER, 8, 4, 1, (int16_t *)&residual, temp);
+	printMatrix(residual, size);
+	transform(mode, 8, size, 1, residual, temp);
 
 	printf("2D DCT block:\n");
-	printMatrix(temp, 4);
+	printMatrix(temp, size);
 
-	inverseTransform(MODE_INTER, 8, 4, 1, temp, result);
+	inverseTransform(mode, 8, size, 1, temp, result);
 
 	printf("Reconstructed block:\n");
-	printMatrix(result, 4);
+	printMatrix(result, size);
 
 	free(result);
 	free(temp);
+	free(residual);
 
 
 	return;

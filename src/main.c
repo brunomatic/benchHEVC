@@ -15,11 +15,11 @@ int main() {
 
 	if (TESTS) {
 		//testInterpolation();
-		testTransformation();
+		testTransformation(4, MODE_INTRA);
 	}
 
-	//benchTransform(500000, 4, MODE_INTRA);
-	benchTransform(1000000, 4, MODE_INTER);
+	benchTransform(5000000, 4, MODE_INTRA);
+	benchTransform(10000000, 4, MODE_INTER);
 	/*
 	benchTransform(500000, 8, MODE_INTER);
 	benchTransform(100000, 16, MODE_INTER);

@@ -3,18 +3,23 @@
 #include "common.h"
 #include "constants.h"
 
+#define USE_INTRISICS 	1
+#define USE_BUTTERFLY	1
+#define DEBUG 0
 
-#define USE_INTRISICS 	0
+#if DEBUG
+
+#include <stdio.h>
+#include "helper.h"
+
+#endif
+
 
 #if USE_INTRISICS
 
 #include "arm_neon.h"
 
 #endif
-
-#define USE_BUTTERFLY	1
-#define DEBUG 0
-
 
 /*
 	Butterfly algorithms - source: x265 reference source
@@ -38,42 +43,161 @@ void inverseButterfly32(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t
 /*
 	4x4 blocks DST and 
 */
-void fastForwardDST(const int16_t* block, int16_t* coeff, uint8_t shift)
+void fastForwardDST(const int16_t* restrict src, int16_t* restrict dst, uint8_t shift)
 {
-	int i, c[4];
-	int round = 1 << (shift - 1);
+
+#if USE_INTRISICS
+	int16x4x4_t data;
+	int32x4_t C[4];
+	int32x4_t temp[5];
+	int32x4_t round = vdupq_n_s32((1 << (shift - 1)));
+	int32x4_t shift_v = vdupq_n_s32(-shift);
+
+	data = vld4_s16(src);
+
+	C[0] = vaddl_s16(data.val[0], data.val[3]);		// c[0] = src[0] + src[3];
+	C[1] = vaddl_s16(data.val[1], data.val[3]);		// c[1] = src[1] + src[3];
+	C[2] = vsubl_s16(data.val[0], data.val[1]);		// c[2] = src[0] - src[1];
+	C[3] = vmull_n_s16(data.val[2], 74);			// c[3] = 74 * src[2];
+
+	temp[0] = vmulq_n_s32(C[0], 29);				// 29 * c[0]
+	temp[1] = vmulq_n_s32(C[1], 55);				// 55 * c[1]
+	temp[0] = vaddq_s32(temp[0], temp[1]);			// 29 * c[0] + 55 * c[1]
+	temp[0] = vaddq_s32(temp[0], C[3]);				// 29 * c[0] + 55 * c[1] + c[3]
+
+	temp[1] = vaddl_s16(data.val[0], data.val[1]);	// src[0] + src[1]
+	temp[1] = vsubw_s16(temp[1], data.val[3]);		// src[0] + src[1] - src[3]
+	temp[1] = vmulq_n_s32(temp[1], 74);				// 74 * (src[0] + src[1] - src[3])
+
+	temp[2] = vmulq_n_s32(C[2], 29);				// 29 * c[2]
+	temp[3] = vmulq_n_s32(C[0], 55);				// 55 * c[0]
+	temp[2] = vaddq_s32(temp[2], temp[3]);			// 29 * c[2] + 55 * c[0]
+	temp[2] = vsubq_s32(temp[2], C[3]);				// 29 * c[2] + 55 * c[0] - c[3]
+
+	temp[3] = vmulq_n_s32(C[2], 55);				// 55 * c[2]
+	temp[4] = vmulq_n_s32(C[1], 29);				// 29 * c[1]
+	temp[3] = vsubq_s32(temp[3], temp[4]);			// 55 * c[2] - 29 * c[1]
+	temp[3] = vaddq_s32(temp[3], C[3]);				// 55 * c[2] - 29 * c[1] + c[3]
+
+	temp[0] = vaddq_s32(temp[0], round);			// 29 * c[0] + 55 * c[1] + c[3] + round
+	temp[1] = vaddq_s32(temp[1], round);			// 74 * (src[0] + src[1] - src[3])  + round
+	temp[2] = vaddq_s32(temp[2], round);			// 29 * c[2] + 55 * c[0] - c[3]  + round
+	temp[3] = vaddq_s32(temp[3], round);  			// 55 * c[2] - 29 * c[1] + c[3]  + round
+
+	temp[0] = vqshlq_s32(temp[0], shift_v);			// (29 * c[0] + 55 * c[1] + c[3] + round)>>shift
+	temp[1] = vqshlq_s32(temp[1], shift_v);			// (74 * (src[0] + src[1] - src[3])  + round)>>shift
+	temp[2] = vqshlq_s32(temp[2], shift_v);			// (29 * c[2] + 55 * c[0] - c[3]  + round)>>shift
+	temp[3] = vqshlq_s32(temp[3], shift_v);  		// (55 * c[2] - 29 * c[1] + c[3]  + round)>>shift
+
+	data.val[0] = vqmovn_s32(temp[0]);
+	data.val[1] = vqmovn_s32(temp[1]);
+	data.val[2] = vqmovn_s32(temp[2]);
+	data.val[3] = vqmovn_s32(temp[3]);
+
+	vst1_s16(dst, data.val[0]);
+	vst1_s16(dst+4, data.val[1]);
+	vst1_s16(dst+8, data.val[2]);
+	vst1_s16(dst+12, data.val[3]);
+
+#else
+
+	int32_t c[4];
+	uint8_t i;
+	int16_t round = 1 << (shift - 1);
 
 	for (i = 0; i < 4; i++)
 	{
 		// Intermediate Variables
-		c[0] = block[4 * i + 0] + block[4 * i + 3];
-		c[1] = block[4 * i + 1] + block[4 * i + 3];
-		c[2] = block[4 * i + 0] - block[4 * i + 1];
-		c[3] = 74 * block[4 * i + 2];
+		c[0] = src[4 * i + 0] + src[4 * i + 3];
+		c[1] = src[4 * i + 1] + src[4 * i + 3];
+		c[2] = src[4 * i + 0] - src[4 * i + 1];
+		c[3] = 74 * src[4 * i + 2];
 
-		coeff[i] = (int16_t)((29 * c[0] + 55 * c[1] + c[3] + round) >> shift);
-		coeff[4 + i] = (int16_t)((74 * (block[4 * i + 0] + block[4 * i + 1] - block[4 * i + 3]) + round) >> shift);
-		coeff[8 + i] = (int16_t)((29 * c[2] + 55 * c[0] - c[3] + round) >> shift);
-		coeff[12 + i] = (int16_t)((55 * c[2] - 29 * c[1] + c[3] + round) >> shift);
+		dst[i] = (int16_t)		((29 * c[0] + 55 * c[1] + c[3] + round) >> shift);
+		dst[4 + i] = (int16_t)	((74 * (src[4 * i + 0] + src[4 * i + 1] - src[4 * i + 3]) + round) >> shift);
+		dst[8 + i] = (int16_t)	((29 * c[2] + 55 * c[0] - c[3] + round) >> shift);
+		dst[12 + i] = (int16_t)	((55 * c[2] - 29 * c[1] + c[3] + round) >> shift);
 	}
+#endif
 }
-void inverseDST(const int16_t* tmp, int16_t* block, uint8_t shift)
+void inverseDST(const int16_t* restrict src, int16_t* restrict dst, uint8_t shift)
 {
-	int i, c[4];
-	int round = 1 << (shift - 1);
+
+#if USE_INTRISICS
+
+	int16x4x4_t data;
+	int32x4_t C[4];
+	int32x4_t temp[5];
+	int32x4_t round = vdupq_n_s32((1 << (shift - 1)));
+	int32x4_t shift_v = vdupq_n_s32(-shift);
+
+
+	data.val[0] = vld1_s16(src);
+	data.val[1] = vld1_s16(src+4);
+	data.val[2] = vld1_s16(src+8);
+	data.val[3] = vld1_s16(src+12);
+
+	C[0] = vaddl_s16(data.val[0], data.val[2]);		// c[0] = src[0] + src[2];
+	C[1] = vaddl_s16(data.val[2], data.val[3]);		// c[1] = src[2] + src[3];
+	C[2] = vsubl_s16(data.val[0], data.val[3]);		// c[2] = src[0] - src[3];
+	C[3] = vmull_n_s16(data.val[1], 74);			// c[3] = 74 * src[1];
+
+	temp[0] = vmulq_n_s32(C[0], 29);				// 29 * c[0]
+	temp[1] = vmulq_n_s32(C[1], 55);				// 55 * c[1]
+	temp[0] = vaddq_s32(temp[0], temp[1]);			// 29 * c[0] + 55 * c[1]
+	temp[0] = vaddq_s32(temp[0], C[3]);				// 29 * c[0] + 55 * c[1] + c[3]
+
+	temp[1] = vmulq_n_s32(C[2], 55);				// 55 * c[2]
+	temp[2] = vmulq_n_s32(C[1], 29);				// 29 * c[1]
+	temp[1] = vsubq_s32(temp[1], temp[2]);			// 55 * c[2] - 29 * c[1]
+	temp[1] = vaddq_s32(temp[1], C[3]);				// 55 * c[2] - 29 * c[1] + c[3]
+
+	temp[2] = vsubl_s16(data.val[0], data.val[2]);	// src[0] - src[2]
+	temp[2] = vaddw_s16(temp[2], data.val[3]);		// src[0] - src[1] + src[3]
+	temp[2] = vmulq_n_s32(temp[2], 74);				// 74 * (src[0] - src[1] + src[3])
+
+	temp[3] = vmulq_n_s32(C[0], 55);				// 55 * c[0]
+	temp[4] = vmulq_n_s32(C[2], 29);				// 29 * c[2]
+	temp[3] = vaddq_s32(temp[3], temp[4]);			// 55 * c[0] + 29 * c[2]
+	temp[3] = vsubq_s32(temp[3], C[3]);				// 55 * c[2] + 29 * c[1] - c[3]
+
+	temp[0] = vaddq_s32(temp[0], round);			// 29 * c[0] + 55 * c[1] + c[3] + round
+	temp[1] = vaddq_s32(temp[1], round);			// 55 * c[2] - 29 * c[1] + c[3]  + round
+	temp[2] = vaddq_s32(temp[2], round);			// 74 * (src[0] - src[1] + src[3])  + round
+	temp[3] = vaddq_s32(temp[3], round);  			// 55 * c[2] + 29 * c[1] - c[3]  + round
+
+	temp[0] = vqshlq_s32(temp[0], shift_v);			// (29 * c[0] + 55 * c[1] + c[3] + round)>>shift
+	temp[1] = vqshlq_s32(temp[1], shift_v);			// (55 * c[2] - 29 * c[1] + c[3]  + round) + round)>>shift
+	temp[2] = vqshlq_s32(temp[2], shift_v);			// (74 * (src[0] - src[1] + src[3]) + round)>>shift
+	temp[3] = vqshlq_s32(temp[3], shift_v);  		// (55 * c[2] + 29 * c[1] - c[3]  + round)>>shift
+
+	data.val[0] = vqmovn_s32(temp[0]);
+	data.val[1] = vqmovn_s32(temp[1]);
+	data.val[2] = vqmovn_s32(temp[2]);
+	data.val[3] = vqmovn_s32(temp[3]);
+
+	vst4_s16(dst, data);
+
+
+#else
+	int32_t c[4];
+	uint8_t i;
+	int16_t round = 1 << (shift - 1);
 
 	for (i = 0; i < 4; i++)
 	{
-		c[0] = tmp[i] + tmp[8 + i];
-		c[1] = tmp[8 + i] + tmp[12 + i];
-		c[2] = tmp[i] - tmp[12 + i];
-		c[3] = 74 * tmp[4 + i];
+		c[0] = src[i] + src[8 + i];
+		c[1] = src[8 + i] + src[12 + i];
+		c[2] = src[i] - src[12 + i];
+		c[3] = 74 * src[4 + i];
 
-		block[4 * i + 0] = (int16_t)Clip(-32768, 32767, (29 * c[0] + 55 * c[1] + c[3] + round) >> shift);
-		block[4 * i + 1] = (int16_t)Clip(-32768, 32767, (55 * c[2] - 29 * c[1] + c[3] + round) >> shift);
-		block[4 * i + 2] = (int16_t)Clip(-32768, 32767, (74 * (tmp[i] - tmp[8 + i] + tmp[12 + i]) + round) >> shift);
-		block[4 * i + 3] = (int16_t)Clip(-32768, 32767, (55 * c[0] + 29 * c[2] - c[3] + round) >> shift);
+		dst[4 * i + 0] = (int16_t)Clip(-32768, 32767, (29 * c[0] + 55 * c[1] + c[3] + round) >> shift);
+		dst[4 * i + 1] = (int16_t)Clip(-32768, 32767, (55 * c[2] - 29 * c[1] + c[3] + round) >> shift);
+		dst[4 * i + 2] = (int16_t)Clip(-32768, 32767, (74 * (src[i] - src[8 + i] + src[12 + i]) + round) >> shift);
+		dst[4 * i + 3] = (int16_t)Clip(-32768, 32767, (55 * c[0] + 29 * c[2] - c[3] + round) >> shift);
+
 	}
+#endif
 }
 
 /*
@@ -215,28 +339,7 @@ void inverseButterfly4(const int16_t* restrict src, int16_t* restrict dst, uint8
 	vst1_s16(dst+8, data.val[3]);
 	vst1_s16(dst+12, data.val[1]);
 
-/*
-	uint8_t j;
-		int32_t E[2], O[2];
-		uint8_t round = 1 << (shift - 1);
-	for (j = 0; j < 4; j++)
-		{
 
-			E[0] = 64 * src[0] + 64 * src[2];
-			O[0] = 83 * src[1] + 36 * src[3];
-			O[1] = 36 * src[1] + -83 * src[3];
-			E[1] = 64 * src[0] + -64 * src[2];
-
-			// Clip and store
-			dst[0] = (int16_t)(Clip(-32768, 32767, (E[0] + O[0] + round) >> shift));
-			dst[12] = (int16_t)(Clip(-32768, 32767, (E[0] - O[0] + round) >> shift));
-			dst[4] = (int16_t)(Clip(-32768, 32767, (E[1] + O[1] + round) >> shift));
-			dst[8] = (int16_t)(Clip(-32768, 32767, (E[1] - O[1] + round) >> shift));
-
-			src+=4;
-			dst++;
-		}
-*/
 #else
 	uint8_t j;
 	int32_t E[2], O[2];
@@ -587,7 +690,6 @@ void transform(uint8_t predictionMode, uint8_t BitDepth, uint8_t nTbS, uint8_t c
 	uint8_t firstShift = 0, secondShift = 0;
 #if USE_BUTTERFLY
 	int16_t * temp;
-	uint8_t i,j;
 #else
 	int32_t * temp;
 	int32_t sum = 0;
@@ -728,24 +830,11 @@ void transform(uint8_t predictionMode, uint8_t BitDepth, uint8_t nTbS, uint8_t c
 // debug printing
 #if DEBUG
 	printf("Temp(1DCT) matrix:\n");
-	for (i = 0; i < nTbS; i++)
-	{
-		for (j = 0; j < nTbS; j++)
-		{
-			printf("%d	", temp[i*nTbS + j]);
-		}
-		printf("\n");
-	}
+	printMatrix(temp, nTbS);
 
 	printf("Result(2DCT) matrix:\n");
-	for (i = 0; i < nTbS; i++)
-	{
-		for (j = 0; j < nTbS; j++)
-		{
-			printf("%d	", result[i*nTbS + j]);
-		}
-		printf("\n");
-	}
+	printMatrix(result, nTbS);
+
 #endif // DEBUG
 
 
@@ -763,7 +852,6 @@ void inverseTransform(uint8_t predictionMode, uint8_t BitDepth, uint8_t nTbS, ui
 	uint8_t firstShift, secondShift;
 #if USE_BUTTERFLY
 	int16_t * temp;
-	uint8_t i,j;
 #else
 	int32_t * temp;
 	int32_t sum = 0;
@@ -885,24 +973,12 @@ void inverseTransform(uint8_t predictionMode, uint8_t BitDepth, uint8_t nTbS, ui
 
 #if DEBUG
 	printf("Temp(1DCT) matrix:\n");
-	for (i = 0; i < nTbS; i++)
-	{
-		for (j = 0; j < nTbS; j++)
-		{
-			printf("%d	", temp[i*nTbS + j]);
-		}
-		printf("\n");
-	}
+	printMatrix(temp, nTbS);
+
 
 	printf("Result(2DCT) matrix:\n");
-	for (i = 0; i < nTbS; i++)
-	{
-		for (j = 0; j < nTbS; j++)
-		{
-			printf("%d	", result[i*nTbS + j]);
-		}
-		printf("\n");
-	}
+	printMatrix(result, nTbS);
+
 #endif
 
 	// cleanup

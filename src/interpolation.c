@@ -3,7 +3,6 @@
 #include "types.h"
 #include "common.h"
 
-
 /*
 	Luma 8 tap interpolation coefficients
 */

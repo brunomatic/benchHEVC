@@ -25,11 +25,17 @@ void testInterpolation()
 
 	printPlaneSegment(&picture, 8, 8, 1, 1, Y_PLANE);
 
-	printPlaneSegment(&picture, 8, 8, 1, 1, CB_PLANE);
+	//printPlaneSegment(&picture, 8, 8, 1, 1, CB_PLANE);
 
-	printPlaneSegment(&picture, 8, 8, 1, 1, CR_PLANE);
+	//printPlaneSegment(&picture, 8, 8, 1, 1, CR_PLANE);
 
 	fractionalInterpolation(&picture, xPb, yPb, nPbW, nPbH, mvLX, mvCLX, 1, &Luma, &Cb, &Cr);
+
+	printMatrix(Luma.data, 4);
+
+	//printMatrix(Cb.data, 4);
+
+	//printMatrix(Cr.data, 4);
 
 	free(Luma.data);
 	free(Cb.data);
@@ -38,8 +44,6 @@ void testInterpolation()
 	free(picture.Y);
 	free(picture.Cb);
 	free(picture.Cr);
-
-	getchar();
 
 	return;
 }
@@ -63,12 +67,12 @@ void testTransformation() {
 
 	printf("Residual block:\n");
 	printMatrix((int16_t *)&residual, 4);
-	transform(MODE_INTRA, 8, 4, 1, (int16_t *)&residual, temp);
+	transform(MODE_INTER, 8, 4, 1, (int16_t *)&residual, temp);
 
 	printf("2D DCT block:\n");
 	printMatrix(temp, 4);
 
-	inverseTransform(MODE_INTRA, 8, 4, 1, temp, result);
+	inverseTransform(MODE_INTER, 8, 4, 1, temp, result);
 
 	printf("Reconstructed block:\n");
 	printMatrix(result, 4);
@@ -76,7 +80,6 @@ void testTransformation() {
 	free(result);
 	free(temp);
 
-	getchar();
 
 	return;
 

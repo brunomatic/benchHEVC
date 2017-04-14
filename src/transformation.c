@@ -3,7 +3,7 @@
 #include "common.h"
 #include "constants.h"
 
-#define USE_INTRISICS 	1
+#define USE_NEON_ASM 	1
 #define USE_BUTTERFLY	1
 #define DEBUG 0
 
@@ -15,9 +15,9 @@
 #endif
 
 
-#if USE_INTRISICS
+#if USE_NEON_ASM
 
-#include "arm_neon.h"
+#include "dct_functions.h"
 
 #endif
 
@@ -31,8 +31,8 @@ void inverseDST(const int16_t* tmp, int16_t* block, uint8_t shift);
 void butterfly4(const int16_t* src, int16_t* dst, uint8_t shift);
 void inverseButterfly4(const int16_t* src, int16_t* dst, uint8_t shift);
 
-void butterfly8(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line);
-void inverseButterfly8(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line);
+void butterfly8(const int16_t* src, int16_t* dst, uint8_t shift);
+void inverseButterfly8(const int16_t* src, int16_t* dst, uint8_t shift);
 
 void butterfly16(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line);
 void inverseButterfly16(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line);
@@ -45,61 +45,6 @@ void inverseButterfly32(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t
 */
 void fastForwardDST(const int16_t* restrict src, int16_t* restrict dst, uint8_t shift)
 {
-
-#if USE_INTRISICS
-	int16x4x4_t data;
-	int32x4_t C[4];
-	int32x4_t temp[5];
-	int32x4_t round = vdupq_n_s32((1 << (shift - 1)));
-	int32x4_t shift_v = vdupq_n_s32(-shift);
-
-	data = vld4_s16(src);
-
-	C[0] = vaddl_s16(data.val[0], data.val[3]);		// c[0] = src[0] + src[3];
-	C[1] = vaddl_s16(data.val[1], data.val[3]);		// c[1] = src[1] + src[3];
-	C[2] = vsubl_s16(data.val[0], data.val[1]);		// c[2] = src[0] - src[1];
-	C[3] = vmull_n_s16(data.val[2], 74);			// c[3] = 74 * src[2];
-
-	temp[0] = vmulq_n_s32(C[0], 29);				// 29 * c[0]
-	temp[1] = vmulq_n_s32(C[1], 55);				// 55 * c[1]
-	temp[0] = vaddq_s32(temp[0], temp[1]);			// 29 * c[0] + 55 * c[1]
-	temp[0] = vaddq_s32(temp[0], C[3]);				// 29 * c[0] + 55 * c[1] + c[3]
-
-	temp[1] = vaddl_s16(data.val[0], data.val[1]);	// src[0] + src[1]
-	temp[1] = vsubw_s16(temp[1], data.val[3]);		// src[0] + src[1] - src[3]
-	temp[1] = vmulq_n_s32(temp[1], 74);				// 74 * (src[0] + src[1] - src[3])
-
-	temp[2] = vmulq_n_s32(C[2], 29);				// 29 * c[2]
-	temp[3] = vmulq_n_s32(C[0], 55);				// 55 * c[0]
-	temp[2] = vaddq_s32(temp[2], temp[3]);			// 29 * c[2] + 55 * c[0]
-	temp[2] = vsubq_s32(temp[2], C[3]);				// 29 * c[2] + 55 * c[0] - c[3]
-
-	temp[3] = vmulq_n_s32(C[2], 55);				// 55 * c[2]
-	temp[4] = vmulq_n_s32(C[1], 29);				// 29 * c[1]
-	temp[3] = vsubq_s32(temp[3], temp[4]);			// 55 * c[2] - 29 * c[1]
-	temp[3] = vaddq_s32(temp[3], C[3]);				// 55 * c[2] - 29 * c[1] + c[3]
-
-	temp[0] = vaddq_s32(temp[0], round);			// 29 * c[0] + 55 * c[1] + c[3] + round
-	temp[1] = vaddq_s32(temp[1], round);			// 74 * (src[0] + src[1] - src[3])  + round
-	temp[2] = vaddq_s32(temp[2], round);			// 29 * c[2] + 55 * c[0] - c[3]  + round
-	temp[3] = vaddq_s32(temp[3], round);  			// 55 * c[2] - 29 * c[1] + c[3]  + round
-
-	temp[0] = vqshlq_s32(temp[0], shift_v);			// (29 * c[0] + 55 * c[1] + c[3] + round)>>shift
-	temp[1] = vqshlq_s32(temp[1], shift_v);			// (74 * (src[0] + src[1] - src[3])  + round)>>shift
-	temp[2] = vqshlq_s32(temp[2], shift_v);			// (29 * c[2] + 55 * c[0] - c[3]  + round)>>shift
-	temp[3] = vqshlq_s32(temp[3], shift_v);  		// (55 * c[2] - 29 * c[1] + c[3]  + round)>>shift
-
-	data.val[0] = vqmovn_s32(temp[0]);
-	data.val[1] = vqmovn_s32(temp[1]);
-	data.val[2] = vqmovn_s32(temp[2]);
-	data.val[3] = vqmovn_s32(temp[3]);
-
-	vst1_s16(dst, data.val[0]);
-	vst1_s16(dst+4, data.val[1]);
-	vst1_s16(dst+8, data.val[2]);
-	vst1_s16(dst+12, data.val[3]);
-
-#else
 
 	int32_t c[4];
 	uint8_t i;
@@ -118,68 +63,10 @@ void fastForwardDST(const int16_t* restrict src, int16_t* restrict dst, uint8_t 
 		dst[8 + i] = (int16_t)	((29 * c[2] + 55 * c[0] - c[3] + round) >> shift);
 		dst[12 + i] = (int16_t)	((55 * c[2] - 29 * c[1] + c[3] + round) >> shift);
 	}
-#endif
 }
 void inverseDST(const int16_t* restrict src, int16_t* restrict dst, uint8_t shift)
 {
 
-#if USE_INTRISICS
-
-	int16x4x4_t data;
-	int32x4_t C[4];
-	int32x4_t temp[5];
-	int32x4_t round = vdupq_n_s32((1 << (shift - 1)));
-	int32x4_t shift_v = vdupq_n_s32(-shift);
-
-
-	data.val[0] = vld1_s16(src);
-	data.val[1] = vld1_s16(src+4);
-	data.val[2] = vld1_s16(src+8);
-	data.val[3] = vld1_s16(src+12);
-
-	C[0] = vaddl_s16(data.val[0], data.val[2]);		// c[0] = src[0] + src[2];
-	C[1] = vaddl_s16(data.val[2], data.val[3]);		// c[1] = src[2] + src[3];
-	C[2] = vsubl_s16(data.val[0], data.val[3]);		// c[2] = src[0] - src[3];
-	C[3] = vmull_n_s16(data.val[1], 74);			// c[3] = 74 * src[1];
-
-	temp[0] = vmulq_n_s32(C[0], 29);				// 29 * c[0]
-	temp[1] = vmulq_n_s32(C[1], 55);				// 55 * c[1]
-	temp[0] = vaddq_s32(temp[0], temp[1]);			// 29 * c[0] + 55 * c[1]
-	temp[0] = vaddq_s32(temp[0], C[3]);				// 29 * c[0] + 55 * c[1] + c[3]
-
-	temp[1] = vmulq_n_s32(C[2], 55);				// 55 * c[2]
-	temp[2] = vmulq_n_s32(C[1], 29);				// 29 * c[1]
-	temp[1] = vsubq_s32(temp[1], temp[2]);			// 55 * c[2] - 29 * c[1]
-	temp[1] = vaddq_s32(temp[1], C[3]);				// 55 * c[2] - 29 * c[1] + c[3]
-
-	temp[2] = vsubl_s16(data.val[0], data.val[2]);	// src[0] - src[2]
-	temp[2] = vaddw_s16(temp[2], data.val[3]);		// src[0] - src[1] + src[3]
-	temp[2] = vmulq_n_s32(temp[2], 74);				// 74 * (src[0] - src[1] + src[3])
-
-	temp[3] = vmulq_n_s32(C[0], 55);				// 55 * c[0]
-	temp[4] = vmulq_n_s32(C[2], 29);				// 29 * c[2]
-	temp[3] = vaddq_s32(temp[3], temp[4]);			// 55 * c[0] + 29 * c[2]
-	temp[3] = vsubq_s32(temp[3], C[3]);				// 55 * c[2] + 29 * c[1] - c[3]
-
-	temp[0] = vaddq_s32(temp[0], round);			// 29 * c[0] + 55 * c[1] + c[3] + round
-	temp[1] = vaddq_s32(temp[1], round);			// 55 * c[2] - 29 * c[1] + c[3]  + round
-	temp[2] = vaddq_s32(temp[2], round);			// 74 * (src[0] - src[1] + src[3])  + round
-	temp[3] = vaddq_s32(temp[3], round);  			// 55 * c[2] + 29 * c[1] - c[3]  + round
-
-	temp[0] = vqshlq_s32(temp[0], shift_v);			// (29 * c[0] + 55 * c[1] + c[3] + round)>>shift
-	temp[1] = vqshlq_s32(temp[1], shift_v);			// (55 * c[2] - 29 * c[1] + c[3]  + round) + round)>>shift
-	temp[2] = vqshlq_s32(temp[2], shift_v);			// (74 * (src[0] - src[1] + src[3]) + round)>>shift
-	temp[3] = vqshlq_s32(temp[3], shift_v);  		// (55 * c[2] + 29 * c[1] - c[3]  + round)>>shift
-
-	data.val[0] = vqmovn_s32(temp[0]);
-	data.val[1] = vqmovn_s32(temp[1]);
-	data.val[2] = vqmovn_s32(temp[2]);
-	data.val[3] = vqmovn_s32(temp[3]);
-
-	vst4_s16(dst, data);
-
-
-#else
 	int32_t c[4];
 	uint8_t i;
 	int16_t round = 1 << (shift - 1);
@@ -197,7 +84,7 @@ void inverseDST(const int16_t* restrict src, int16_t* restrict dst, uint8_t shif
 		dst[4 * i + 3] = (int16_t)Clip(-32768, 32767, (55 * c[0] + 29 * c[2] - c[3] + round) >> shift);
 
 	}
-#endif
+
 }
 
 /*
@@ -205,64 +92,6 @@ void inverseDST(const int16_t* restrict src, int16_t* restrict dst, uint8_t shif
 */
 void butterfly4(const int16_t* restrict src, int16_t* restrict dst, uint8_t shift)
 {
-#if USE_INTRISICS
-
-	int16x4x4_t data;
-	int32x4x2_t E, O;
-	int32x4_t temp[10];
-	int32x4_t round = vdupq_n_s32((1 << (shift - 1)));
-	int32x4_t shift_v = vdupq_n_s32(-shift);
-
-	data = vld4_s16(src);
-
-	E.val[0] = vaddl_s16(data.val[0], data.val[1]);
-	E.val[1] = vaddl_s16(data.val[2], data.val[3]);
-
-	O.val[0] = vsubl_s16(data.val[0], data.val[1]);
-	O.val[1] = vsubl_s16(data.val[2], data.val[3]);
-
-	temp[0] = vmulq_n_s32(E.val[0], 64);	// E[0]*64
-	temp[1] = vmulq_n_s32(E.val[1], 64);	// E[1]*64
-
-	temp[2] = vmulq_n_s32(E.val[1], -64);	// E[1]*-64
-
-	temp[3] = vmulq_n_s32(O.val[0], 83);	// O[0]*83
-	temp[4] = vmulq_n_s32(O.val[1], 36);	// O[1]*36
-
-	temp[5] = vmulq_n_s32(O.val[0], 36);	// O[0]*36
-	temp[6] = vmulq_n_s32(O.val[1], -83);	// O[1]*-83
-
-
-	temp[7] = vaddq_s32(temp[0], temp[1]);	// E[0]*64 + E[1]*64
-	temp[8] = vaddq_s32(temp[0], temp[2]);	// E[0]*64 + E[1]*-64
-
-	temp[9] = vaddq_s32(temp[3], temp[4]);  // O[0]*83 + O[1]*36
-	temp[10] = vaddq_s32(temp[5], temp[6]);	// O[0]*83 + O[1]*36
-
-	temp[7] = vaddq_s32(temp[7], round);	// E[0]*64 + E[1]*64 + round
-	temp[8] = vaddq_s32(temp[8], round);	// E[0]*64 + E[1]*-64 + round
-	temp[9] = vaddq_s32(temp[9], round);	// O[0]*83 + O[1]*36 + round
-	temp[10] = vaddq_s32(temp[10], round);  // O[0]*83 + O[1]*36 + round
-
-
-	temp[7] = vqshlq_s32(temp[7], shift_v);		// (E[0]*64 + E[1]*64 + round)>>shift
-	temp[8] = vqshlq_s32(temp[8], shift_v); 	// (E[0]*64 + E[1]*-64 + round)>>shift
-	temp[9] = vqshlq_s32(temp[9], shift_v); 	// (O[0]*83 + O[1]*36 + round)>>shift
-	temp[10] = vqshlq_s32(temp[10], shift_v);	// (O[0]*83 + O[1]*36 + round)>>shift
-
-	data.val[0] = vqmovn_s32(temp[7]);
-	data.val[1] = vqmovn_s32(temp[8]);
-	data.val[2] = vqmovn_s32(temp[9]);
-	data.val[3] = vqmovn_s32(temp[10]);
-
-	vst1_s16(dst, data.val[0]);
-	vst1_s16(dst+4, data.val[1]);
-	vst1_s16(dst+8, data.val[2]);
-	vst1_s16(dst+12, data.val[3]);
-
-	return;
-
-#else
 	uint8_t j;
 	int32_t E[2], O[2];
 	uint8_t round = 1 << (shift - 1);
@@ -282,65 +111,9 @@ void butterfly4(const int16_t* restrict src, int16_t* restrict dst, uint8_t shif
 		src += 4;
 		dst++;
 	}
-#endif
 }
 void inverseButterfly4(const int16_t* restrict src, int16_t* restrict dst, uint8_t shift)
 {
-
-#if USE_INTRISICS
-
-	int16x4x4_t data;
-	int32x4x2_t E, O;
-	int32x4_t temp[7];
-	int32x4_t round = vdupq_n_s32((1 << (shift - 1)));
-	int32x4_t shift_v = vdupq_n_s32(-shift);
-
-	data = vld4_s16(src);
-
-	temp[0] = vmull_n_s16(data.val[0], 64);	// src[0]*64
-	temp[1] = vmull_n_s16(data.val[2], 64);	// src[2]*64
-
-	temp[2] = vmull_n_s16(data.val[1], 83);	// src[1]*83
-	temp[3] = vmull_n_s16(data.val[3], 36);	// src[3]*36
-
-	temp[4] = vmull_n_s16(data.val[1], 36);		// src[1]*36
-	temp[5] = vmull_n_s16(data.val[3], -83);	// src[3]*-83
-
-	temp[6] = vmull_n_s16(data.val[1], -64);	// src[2]*-64
-
-	E.val[0] = vaddq_s32(temp[0], temp[1]);  // E[0] = 64 * src[0] + 64 * src[2];
-	O.val[0] = vaddq_s32(temp[2], temp[3]);	 // O[0] = 83 * src[1] + 36 * src[3];
-	O.val[1] = vaddq_s32(temp[4], temp[5]);	 // O[1] = 36 * src[1] + -83 * src[3];
-	E.val[1] = vaddq_s32(temp[0], temp[6]);	 // E[1] = 64 * src[0] + -64 * src[2];
-
-	temp[0] = vaddq_s32(E.val[0], O.val[0]);	// E[0] + O[0]
-	temp[1] = vsubq_s32(E.val[0], O.val[0]);	// E[0] - O[0]
-	temp[2] = vaddq_s32(E.val[1], O.val[1]);	// E[1] + O[1]
-	temp[3] = vsubq_s32(E.val[1], O.val[1]);	// E[1] - O[1]
-
-	temp[0] = vaddq_s32(temp[0], round);	// E[0] + O[0] + round
-	temp[1] = vaddq_s32(temp[1], round);	// E[0] - O[0] + round
-	temp[2] = vaddq_s32(temp[2], round);	// E[1] + O[1] + round
-	temp[3] = vaddq_s32(temp[3], round);	// E[1] - O[1] + round
-
-	temp[0] = vqshlq_s32(temp[0], shift_v);	// clip((E[0] + O[0] + round)>>shift)
-	temp[1] = vqshlq_s32(temp[1], shift_v);	// clip((E[0] - O[0] + round)>>shift)
-	temp[2] = vqshlq_s32(temp[2], shift_v);	// clip((E[1] + O[1] + round)>>shift)
-	temp[3] = vqshlq_s32(temp[3], shift_v);	// clip((E[1] - O[1] + round)>>shift)
-
-	data.val[0] = vqmovn_s32(temp[0]);	// clip(E[0] + O[0] + round)
-	data.val[1] = vqmovn_s32(temp[1]);	// clip(E[0] - O[0] + round)
-	data.val[2] = vqmovn_s32(temp[2]);	// clip(E[1] + O[1] + round)
-	data.val[3] = vqmovn_s32(temp[3]);	// clip(E[1] - O[1] + round)
-
-
-	vst1_s16(dst, data.val[0]);
-	vst1_s16(dst+4, data.val[2]);
-	vst1_s16(dst+8, data.val[3]);
-	vst1_s16(dst+12, data.val[1]);
-
-
-#else
 	uint8_t j;
 	int32_t E[2], O[2];
 	uint8_t round = 1 << (shift - 1);
@@ -361,67 +134,72 @@ void inverseButterfly4(const int16_t* restrict src, int16_t* restrict dst, uint8
 		src+=4;
 		dst++;
 	}
-#endif
 }
 
 /*
 	8x8 blocks DCT and iDCT
 */
-void butterfly8(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line)
+void butterfly8(const int16_t* restrict src, int16_t* restrict dst, uint8_t shift)
 {
 	int j, k;
 	int E[4], O[4];
 	int EE[2], EO[2];
 	int round = 1 << (shift - 1);
 
-	for (j = 0; j < line; j++)
-	{
-		/* E and O*/
-		for (k = 0; k < 4; k++)
+	for (j = 0; j < 8; j++)
 		{
-			E[k] = src[k] + src[7 - k];
-			O[k] = src[k] - src[7 - k];
+
+
+			E[0] = src[0] + src[7];
+			E[1] = src[1] + src[6];
+			E[2] = src[2] + src[5];
+			E[3] = src[3] + src[4];
+
+			O[0] = src[0] - src[7];
+			O[1] = src[1] - src[6];
+			O[2] = src[2] - src[5];
+			O[3] = src[3] - src[4];
+
+			/* EE and EO */
+			EE[0] = E[0] + E[3];
+			EE[1] = E[1] + E[2];
+			EO[0] = E[0] - E[3];
+			EO[1] = E[1] - E[2];
+
+
+			dst[0] = (int16_t)((	64 * EE[0] + 	64 * EE[1] +	0 * EO[0] + 	0 * EO[1] + round) >> shift);
+			dst[32] = (int16_t)((	64 * EE[0] + 	-64 * EE[1] +	0 * EO[0] + 	0 * EO[1] + round) >> shift);
+			dst[16] = (int16_t)((	0  * EE[0] + 	 0 * EE[1]	+	83 * EO[0] + 	36 * EO[1] + round) >> shift);
+			dst[48] = (int16_t)((	0  * EE[0] + 	 0 * EE[1]	+	36 * EO[0] + 	-83 * EO[1] + round) >> shift);
+
+			dst[8] = (int16_t)((	89 * O[0] + 	75 * O[1] + 	50 * O[2] + 	18 * O[3] + round) >> shift);
+			dst[24] = (int16_t)((	75 * O[0] + 	-18 * O[1] + 	-89 * O[2] + 	-50 * O[3] + round) >> shift);
+			dst[40] = (int16_t)((	50 * O[0] +		-89 * O[1] + 	18 * O[2] + 	75 * O[3] + round) >> shift);
+			dst[56] = (int16_t)((	18 * O[0] + 	-50 * O[1] + 	75 * O[2] + 	-89 * O[3] + round) >> shift);
+
+			src += 8;
+			dst++;
 		}
-
-		/* EE and EO */
-		EE[0] = E[0] + E[3];
-		EO[0] = E[0] - E[3];
-		EE[1] = E[1] + E[2];
-		EO[1] = E[1] - E[2];
-
-		dst[0] = (int16_t)((dctMatrix[0][0] * EE[0] + dctMatrix[0][1] * EE[1] + round) >> shift);
-		dst[4 * line] = (int16_t)((dctMatrix[16][0] * EE[0] + dctMatrix[16][1] * EE[1] + round) >> shift);
-		dst[2 * line] = (int16_t)((dctMatrix[8][0] * EO[0] + dctMatrix[8][1] * EO[1] + round) >> shift);
-		dst[6 * line] = (int16_t)((dctMatrix[24][0] * EO[0] + dctMatrix[24][1] * EO[1] + round) >> shift);
-
-		dst[line] = (int16_t)((dctMatrix[4][0] * O[0] + dctMatrix[4][1] * O[1] + dctMatrix[4][2] * O[2] + dctMatrix[4][3] * O[3] + round) >> shift);
-		dst[3 * line] = (int16_t)((dctMatrix[12][0] * O[0] + dctMatrix[12][1] * O[1] + dctMatrix[12][2] * O[2] + dctMatrix[12][3] * O[3] + round) >> shift);
-		dst[5 * line] = (int16_t)((dctMatrix[20][0] * O[0] + dctMatrix[20][1] * O[1] + dctMatrix[20][2] * O[2] + dctMatrix[20][3] * O[3] + round) >> shift);
-		dst[7 * line] = (int16_t)((dctMatrix[28][0] * O[0] + dctMatrix[28][1] * O[1] + dctMatrix[28][2] * O[2] + dctMatrix[28][3] * O[3] + round) >> shift);
-
-		src += 8;
-		dst++;
-	}
 }
-void inverseButterfly8(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line)
+void inverseButterfly8(const int16_t* src, int16_t* dst, uint8_t shift)
 {
 	int j, k;
 	int E[4], O[4];
 	int EE[2], EO[2];
 	int round = 1 << (shift - 1);
 
-	for (j = 0; j < line; j++)
+	for (j = 0; j < 8; j++)
 	{
 		/* Utilizing symmetry properties to the maximum to minimize the number of multiplications */
 		for (k = 0; k < 4; k++)
 		{
-			O[k] = dctMatrix[4][k] * src[line] + dctMatrix[12][k] * src[3 * line] + dctMatrix[20][k] * src[5 * line] + dctMatrix[28][k] * src[7 * line];
+			O[k] = dctMatrix[4][k] * src[8] + dctMatrix[12][k] * src[24] + dctMatrix[20][k] * src[40] + dctMatrix[28][k] * src[56];
 		}
 
-		EO[0] = dctMatrix[8][0] * src[2 * line] + dctMatrix[24][0] * src[6 * line];
-		EO[1] = dctMatrix[8][1] * src[2 * line] + dctMatrix[24][1] * src[6 * line];
-		EE[0] = dctMatrix[0][0] * src[0] + dctMatrix[16][0] * src[4 * line];
-		EE[1] = dctMatrix[0][1] * src[0] + dctMatrix[16][1] * src[4 * line];
+		EO[0] = dctMatrix[8][0] * src[16] + dctMatrix[24][0] * src[48];
+		EO[1] = dctMatrix[8][1] * src[16] + dctMatrix[24][1] * src[48];
+		EE[0] = dctMatrix[0][0] * src[0] + dctMatrix[16][0] * src[32];
+		EE[1] = dctMatrix[0][1] * src[0] + dctMatrix[16][1] * src[32];
 
 		/* Combining even and odd terms at each hierarchy levels to calculate the final spatial domain vector */
 		E[0] = EE[0] + EO[0];
@@ -722,7 +500,7 @@ void transform(uint8_t predictionMode, uint8_t BitDepth, uint8_t nTbS, uint8_t c
 #if USE_BUTTERFLY
 
 	// allocate and zero int space
-	temp = (int16_t *)calloc(sizeof(int16_t), nTbS*nTbS);
+	temp = (int16_t *)malloc(sizeof(int16_t)*nTbS*nTbS);
 
 	// handle alternate DST transform of 4x4 blocks
 	if (predictionMode == MODE_INTRA && nTbS == 4) 
@@ -736,16 +514,28 @@ void transform(uint8_t predictionMode, uint8_t BitDepth, uint8_t nTbS, uint8_t c
 		switch (nTbS)
 		{
 		case 4:
+#if USE_NEON_ASM
+			x265_dct_4x4_neon(residual, result);
+#else
 			butterfly4(residual, temp, firstShift);
 			butterfly4(temp, result, secondShift);
+#endif
 			break;
 		case 8:
-			butterfly8(residual, temp, firstShift, 8);
-			butterfly8(temp, result, secondShift, 8);
+#if USE_NEON_ASM
+			x265_dct_8x8_neon(residual, result);
+#else
+			butterfly8(residual, temp, firstShift);
+			butterfly8(temp, result, secondShift);
+#endif
 			break;
 		case 16:
+#if USE_NEON_ASM
+			x265_dct_16x16_neon(residual, result);
+#else
 			butterfly16(residual, temp, firstShift, 16);
 			butterfly16(temp, result, secondShift, 16);
+#endif
 			break;
 		case 32:
 			butterfly32(residual, temp, firstShift, 32);
@@ -866,7 +656,7 @@ void inverseTransform(uint8_t predictionMode, uint8_t BitDepth, uint8_t nTbS, ui
 
 #if USE_BUTTERFLY
 
-	temp = (int16_t *)calloc(sizeof(int16_t), nTbS*nTbS);
+	temp = (int16_t *)malloc(sizeof(int16_t)*nTbS*nTbS);
 
 	// handle alternate DST transform of 4x4 blocks
 	if (predictionMode == MODE_INTRA && nTbS == 4)
@@ -884,8 +674,8 @@ void inverseTransform(uint8_t predictionMode, uint8_t BitDepth, uint8_t nTbS, ui
 			inverseButterfly4(temp, result, secondShift);
 			break;
 		case 8:
-			inverseButterfly8(transform, temp, firstShift, 8);
-			inverseButterfly8(temp, result, secondShift, 8);
+			inverseButterfly8(transform, temp, firstShift);
+			inverseButterfly8(temp, result, secondShift);
 			break;
 		case 16:
 			inverseButterfly16(transform, temp, firstShift, 16);

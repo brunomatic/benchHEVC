@@ -21,7 +21,7 @@ void benchTransform(uint32_t numberOfIterations, uint8_t blockSize, uint8_t mode
 	result = (int16_t *)malloc(sizeof(int16_t) * blockSize * blockSize);
 	temp = (int16_t *)malloc(sizeof(int16_t) * blockSize * blockSize);
 
-	printf("Running %d iteratons of %dx%d transforms and inverse transforms...\n", numberOfIterations, blockSize, blockSize);
+	printf("Running %d iterations of %dx%d transforms and inverse transforms...\n", numberOfIterations, blockSize, blockSize);
 	for ( i = 0; i < numberOfIterations; i++)
 	{
 

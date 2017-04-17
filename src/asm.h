@@ -9,5 +9,6 @@
 #define SRC_ASM_H_
 
 extern void transpose(int16_t* src, int16_t * dst);
+extern void dct32(int16_t* src, int16_t * dst);
 
 #endif /* SRC_ASM_H_ */

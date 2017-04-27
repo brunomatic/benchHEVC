@@ -658,51 +658,50 @@ dct32:
 	vmlal.s16	q14, d17, d1[3]		//dst[21] += 61*O6
 	vmlsl.s16	q15, d17, d2[1]		//dst[23] -= 46*O6
 
-//************************** left off
-	vmlal.s16	q12, d14, d0[2]		//dst[17] += 85*O7
-	vmlsl.s16	q13, d14, d3[0]		//dst[19] -= 22*O7
-	vmlsl.s16	q14, d14, d0[0]		//dst[21] -= 90*O7
-	vmlal.s16	q15, d14, d3[2]		//dst[23] +=  4*O7
+	vmlal.s16	q12, d14, d0[0]		//dst[17] += 90*O7
+	vmlal.s16	q13, d14, d3[1]		//dst[19] += 13*O7
+	vmlsl.s16	q14, d14, d0[1]		//dst[21] -= 88*O7
+	vmlsl.s16	q15, d14, d2[3]		//dst[23] -= 31*O7
 
-	vmlal.s16	q12, d10, d2[3]		//dst[17] += 31*O8
-	vmlsl.s16	q13, d10, d0[1]		//dst[19] -= 88*O8
-	vmlsl.s16	q14, d10, d3[1]		//dst[21] -= 13*O8
-	vmlal.s16	q15, d10, d0[0]		//dst[23] += 90*O8
+	vmlsl.s16	q12, d10, d3[2]		//dst[17] -=  4*O8
+	vmlsl.s16	q13, d10, d0[0]		//dst[19] -= 90*O8
+	vmlal.s16	q14, d10, d3[0]		//dst[21] += 22*O8
+	vmlal.s16	q15, d10, d0[2]		//dst[23] += 85*O8
 
-	vmlsl.s16	q12, d21, d2[1]		//dst[17] -= 46*O9
-	vmlsl.s16	q13, d21, d1[3]		//dst[19] -= 61*O9
-	vmlal.s16	q14, d21, d0[3]		//dst[21] += 82*O9
-	vmlal.s16	q15, d21, d3[1]		//dst[23] += 13*O9
+	vmlsl.s16	q12, d21, d0[0]		//dst[17] -= 90*O9
+	vmlal.s16	q13, d21, d2[2]		//dst[19] += 38*O9
+	vmlal.s16	q14, d21, d1[2]		//dst[21] += 67*O9
+	vmlsl.s16	q15, d21, d1[0]		//dst[23] -= 78*O9
 
-	vmlsl.s16	q12, d18, d0[0]		//dst[17] -= 90*O10
-	vmlal.s16	q13, d18, d2[3]		//dst[19] += 31*O10
-	vmlal.s16	q14, d18, d1[3]		//dst[21] += 61*O10
-	vmlsl.s16	q15, d18, d0[1]		//dst[23] -= 88*O10
+	vmlal.s16	q12, d18, d3[0]		//dst[17] += 22*O10
+	vmlal.s16	q13, d18, d1[2]		//dst[19] += 67*O10
+	vmlsl.s16	q14, d18, d0[2]		//dst[21] -= 85*O10
+	vmlal.s16	q15, d18, d3[1]		//dst[23] += 13*O10
 
-	vmlsl.s16	q12, d13, d1[2]		//dst[17] -= 67*O11
-	vmlal.s16	q13, d13, d0[0]		//dst[19] += 90*O11
-	vmlsl.s16	q14, d13, d2[1]		//dst[21] -= 46*O11
-	vmlsl.s16	q15, d13, d2[3]		//dst[23] -= 31*O11
+	vmlal.s16	q12, d13, d0[2]		//dst[17] += 85*O11
+	vmlsl.s16	q13, d13, d1[0]		//dst[19] -= 78*O11
+	vmlal.s16	q14, d13, d3[1]		//dst[21] += 13*O11
+	vmlal.s16	q15, d13, d1[3]		//dst[23] += 61*O11
 
-	vmlal.s16	q12, d11, d3[2]		//dst[17] +=  4*O12
-	vmlal.s16	q13, d11, d2[0]		//dst[19] += 54*O12
-	vmlsl.s16	q14, d11, d0[1]		//dst[21] -= 88*O12
-	vmlal.s16	q15, d11, d0[3]		//dst[23] += 82*O12
+	vmlsl.s16	q12, d11, d2[2]		//dst[17] -= 38*O12
+	vmlsl.s16	q13, d11, d3[0]		//dst[19] -= 22*O12
+	vmlal.s16	q14, d11, d1[1]		//dst[21] += 73*O12
+	vmlsl.s16	q15, d11, d0[0]		//dst[23] -= 90*O12
 
-	vmlal.s16	q12, d20, d1[1]		//dst[17] += 73*O13
-	vmlsl.s16	q13, d20, d2[2]		//dst[19] -= 38*O13
-	vmlsl.s16	q14, d20, d3[2]		//dst[21] -=  4*O13
-	vmlal.s16	q15, d20, d2[1]		//dst[23] += 46*O13
+	vmlsl.s16	q12, d20, d1[0]		//dst[17] -= 78*O13
+	vmlal.s16	q13, d20, d0[0]		//dst[19] += 90*O13
+	vmlsl.s16	q14, d20, d0[3]		//dst[21] -= 82*O13
+	vmlal.s16	q15, d20, d2[0]		//dst[23] += 54*O13
 
-	vmlal.s16	q12, d19, d0[1]		//dst[17] += 88*O14
-	vmlsl.s16	q13, d19, d0[0]		//dst[19] -= 90*O14
-	vmlal.s16	q14, d19, d0[2]		//dst[21] += 85*O14
-	vmlsl.s16	q15, d19, d1[1]		//dst[23] -= 73*O14
+	vmlal.s16	q12, d19, d2[0]		//dst[17] += 54*O14
+	vmlsl.s16	q13, d19, d2[3]		//dst[19] -= 31*O14
+	vmlal.s16	q14, d19, d3[2]		//dst[21] +=  4*O14
+	vmlal.s16	q15, d19, d3[0]		//dst[23] += 22*O14
 
-	vmlal.s16	q12, d12, d2[2]		//dst[17] += 38*O15
-	vmlsl.s16	q13, d12, d2[1]		//dst[19] -= 46*O15
-	vmlal.s16	q14, d12, d2[0]		//dst[21] += 54*O15
-	vmlsl.s16	q15, d12, d1[3]		//dst[23] -= 61*O15
+	vmlal.s16	q12, d12, d1[2]		//dst[17] += 67*O15
+	vmlsl.s16	q13, d12, d1[1]		//dst[19] -= 73*O15
+	vmlal.s16	q14, d12, d1[0]		//dst[21] += 78*O15
+	vmlsl.s16	q15, d12, d0[3]		//dst[23] -= 82*O15
 
 	vqrshrn.s32	d4, q12, #4		// d4 => dst[9]
     vqrshrn.s32 d5, q13, #4		// d5 => dst[19]
@@ -714,6 +713,96 @@ dct32:
 	vst1.16	{d6}, [r1], lr
 	vst1.16	{d7}, [r1], lr		// pointer stops on row 25
 
+	// calculate rows 25, 27, 29, 31 in parallel
+	vmull.s16	q12, d8, d2[3]		//dst[25] = 31*O0
+	vmull.s16	q13, d8, d3[0]		//dst[27] = 22*O0
+	vmull.s16	q14, d8, d3[1]		//dst[29] = 13*O0
+	vmull.s16	q15, d8, d3[2]		//dst[31] =  4*O0
+
+	vmlsl.s16	q12, d23, d1[0]		//dst[25] -= 78*O1
+	vmlsl.s16	q13, d23, d1[3]		//dst[27] -= 61*O1
+	vmlsl.s16	q14, d23, d2[3]		//dst[29] -= 38*O1
+	vmlsl.s16	q15, d23, d3[1]		//dst[31] -= 13*O1
+
+	vmlal.s16	q12, d16, d0[0]		//dst[25] += 90*O2
+	vmlal.s16	q13, d16, d0[2]		//dst[27] += 85*O2
+	vmlal.s16	q14, d16, d1[3]		//dst[29] += 61*O2
+	vmlal.s16	q15, d16, d3[0]		//dst[31] += 22*O2
+
+	vmlsl.s16	q12, d15, d1[3]		//dst[25] -= 61*O3
+	vmlsl.s16	q13, d15, d0[0]		//dst[27] -= 90*O3
+	vmlsl.s16	q14, d15, d1[0]		//dst[29] -= 78*O3
+	vmlsl.s16	q15, d15, d2[3]		//dst[31] -= 31*O3
+
+	vmlal.s16	q12, d9, d3[2]		//dst[25] +=  4*O4
+	vmlal.s16	q13, d9, d1[1]		//dst[27] += 73*O4
+	vmlal.s16	q14, d9, d0[1]		//dst[29] += 88*O4
+	vmlal.s16	q15, d9, d2[2]		//dst[31] += 38*O4
+
+	vmlal.s16	q12, d22, d2[0]		//dst[25] += 54*O5
+	vmlsl.s16	q13, d22, d2[2]		//dst[27] -= 38*O5
+	vmlsl.s16	q14, d22, d0[0]		//dst[29] -= 90*O5
+	vmlsl.s16	q15, d22, d2[1]		//dst[31] -= 46*O5
+
+	vmlsl.s16	q12, d17, d0[1]		//dst[25] -= 88*O6
+	vmlsl.s16	q13, d17, d3[2]		//dst[27] -=  4*O6
+	vmlal.s16	q14, d17, d0[2]		//dst[29] += 85*O6
+	vmlal.s16	q15, d17, d2[0]		//dst[31] += 54*O6
+
+	vmlal.s16	q12, d14, d0[3]		//dst[25] += 82*O7
+	vmlal.s16	q13, d14, d2[1]		//dst[27] += 46*O7
+	vmlsl.s16	q14, d14, d1[1]		//dst[29] -= 73*O7
+	vmlsl.s16	q15, d14, d1[3]		//dst[31] -= 61*O7
+
+	vmlsl.s16	q12, d10, d2[2]		//dst[25] -= 38*O8
+	vmlsl.s16	q13, d10, d1[0]		//dst[27] -= 78*O8
+	vmlal.s16	q14, d10, d2[0]		//dst[29] += 54*O8
+	vmlal.s16	q15, d10, d1[2]		//dst[31] += 67*O8
+
+	vmlsl.s16	q12, d21, d3[0]		//dst[25] -= 22*O9
+	vmlal.s16	q13, d21, d0[0]		//dst[27] += 90*O9
+	vmlsl.s16	q14, d21, d2[3]		//dst[29] -= 31*O9
+	vmlsl.s16	q15, d21, d1[1]		//dst[31] -= 73*O9
+
+	vmlal.s16	q12, d18, d1[1]		//dst[25] += 73*O10
+	vmlsl.s16	q13, d18, d0[3]		//dst[27] -= 82*O10
+	vmlal.s16	q14, d18, d3[2]		//dst[29] +=  4*O10
+	vmlal.s16	q15, d18, d1[0]		//dst[31] += 78*O10
+
+	vmlsl.s16	q12, d13, d0[0]		//dst[25] -= 90*O11
+	vmlal.s16	q13, d13, d2[0]		//dst[27] += 54*O11
+	vmlal.s16	q14, d13, d3[0]		//dst[29] += 22*O11
+	vmlsl.s16	q15, d13, d0[3]		//dst[31] -= 82*O11
+
+	vmlal.s16	q12, d11, d1[2]		//dst[25] += 67*O12
+	vmlsl.s16	q13, d11, d3[1]		//dst[27] -= 13*O12
+	vmlsl.s16	q14, d11, d2[1]		//dst[29] -= 46*O12
+	vmlal.s16	q15, d11, d0[2]		//dst[31] += 85*O12
+
+	vmlsl.s16	q12, d20, d3[1]		//dst[25] -= 13*O13
+	vmlsl.s16	q13, d20, d2[3]		//dst[27] -= 31*O13
+	vmlal.s16	q14, d20, d1[2]		//dst[29] += 67*O13
+	vmlsl.s16	q15, d20, d0[1]		//dst[31] -= 88*O13
+
+	vmlsl.s16	q12, d19, d2[1]		//dst[25] -= 46*O14
+	vmlal.s16	q13, d19, d1[2]		//dst[27] += 67*O14
+	vmlsl.s16	q14, d19, d0[3]		//dst[29] -= 82*O14
+	vmlal.s16	q15, d19, d0[0]		//dst[31] += 90*O14
+
+	vmlal.s16	q12, d12, d0[2]		//dst[25] += 85*O15
+	vmlsl.s16	q13, d12, d0[1]		//dst[27] -= 88*O15
+	vmlal.s16	q14, d12, d0[0]		//dst[29] += 90*O15
+	vmlsl.s16	q15, d12, d0[0]		//dst[31] -= 90*O15
+
+	vqrshrn.s32	d4, q12, #4		// d4 => dst[9]
+    vqrshrn.s32 d5, q13, #4		// d5 => dst[27]
+    vqrshrn.s32	d6, q14, #4		// d6 => dst[29]
+    vqrshrn.s32	d7, q15, #4		// d7 => dst[31]
+
+    vst1.16	{d4}, [r1], lr
+	vst1.16	{d5}, [r1], lr
+	vst1.16	{d6}, [r1], lr
+	vst1.16	{d7}, [r1], lr
 	add r3, #4*2
 	mov r1, r3
 	subs r2, #1

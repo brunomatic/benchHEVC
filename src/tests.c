@@ -65,7 +65,7 @@ void testTransformation(uint8_t size, uint8_t mode) {
 	for(i = 0; i < size; i++)
 	{
 		for(j = 0; j < size; j++){
-			residual[i*size + j] = -256;
+			residual[i*size + j] = -256 + (j%2);
 		}
 	}
 

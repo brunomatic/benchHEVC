@@ -3,7 +3,7 @@
 #include "common.h"
 #include "constants.h"
 
-#define USE_NEON_ASM 	1
+#define USE_NEON_ASM 	0
 #define USE_BUTTERFLY	1
 #define DEBUG 0
 

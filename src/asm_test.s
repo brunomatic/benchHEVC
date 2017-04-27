@@ -395,10 +395,35 @@ dct32:
 	vst1.16	{d14}, [r1], lr
 	vst1.16	{d15}, [r1], lr
 
-	vpop {q4}
-	vpop {q4}
-	vpop {q4}
-	vpop {q4}
+
+	// free regs => q12-q15, q2-q7
+	vpop {q4-q7}
+	// (0,1)
+	//	q4	=> [O0	O2	O4	O6]
+    //	q5	=> [O8	O10	O12	O14]
+    //	q6 	=> [O15	O13	O11	O9]
+    //	q7 	=> [O7	O5	O3	O1]
+    // (2,3)
+	//	q8	=> [O0	O2	O4	O6]
+    //	q9	=> [O8	O10	O12	O14]
+    //	q10 => [O15	O13	O11	O9]
+    //	q11 => [O7	O5	O3	O1]
+//******************************************TEST VZIP how it works *****************************
+	vzip.32 q8, q4
+	vzip.32 q9, q5
+	vzip.32 q10, q6
+	vzip.32 q11, q7
+	//	q4	=> [O0	O2]
+	//	q5	=> [O8	O10]
+	//	q6 	=> [O15	O13]
+	//	q7 	=> [O7	O5]
+	//	q8	=> [O4	O6]
+	//	q9	=> [O12	O14]
+	//	q10 => [O11	O9]
+	//	q11 => [O3	O1]
+
+	// here comes the fucking sorcery ;)
+
 
 	add r3, #4*2
 	mov r1, r3

@@ -14,6 +14,68 @@ void butterfly4(const int16_t* src, int16_t* dst, uint8_t shift);
 void inverseButterfly4(const int16_t* src, int16_t* dst, uint8_t shift);
 
 
+
+void transposeIntr(const int16_t* src, int16_t * dst){
+	int16x4x2_t block[4];
+	int16x8_t blockQ[4];
+	int32x4x2_t temp[2];
+
+	/*	|	block[0][0]	|	block[1][0]	|
+	 * 	|	block[0][1]	|	block[1][1]	|
+	 * 	---------------------------------
+	 * 	|	block[2][0]	|	block[3][0]	|
+	 * 	|	block[2][1]	|	block[3][1]	|
+	 */
+
+	block[0].val[0] = vld1_s16(src);
+	block[1].val[0] = vld1_s16(src+4);
+	block[0].val[1] = vld1_s16(src+8);
+	block[1].val[1] = vld1_s16(src+12);
+	block[2].val[0] = vld1_s16(src+16);
+	block[3].val[0] = vld1_s16(src+20);
+	block[2].val[1] = vld1_s16(src+24);
+	block[3].val[1] = vld1_s16(src+28);
+
+	block[0] = vtrn_s16(block[0].val[0],block[0].val[1]);
+	block[1] = vtrn_s16(block[1].val[0],block[1].val[1]);
+	block[2] = vtrn_s16(block[2].val[0],block[2].val[1]);
+	block[3] = vtrn_s16(block[3].val[0],block[3].val[1]);
+
+	blockQ[0] =  vcombine_s16(block[0].val[0],block[0].val[1]);
+	blockQ[1] =  vcombine_s16(block[1].val[0],block[1].val[1]);
+	blockQ[2] =  vcombine_s16(block[2].val[0],block[2].val[1]);
+	blockQ[3] =  vcombine_s16(block[3].val[0],block[3].val[1]);
+
+	temp[0] =  vtrnq_s32((int32x4_t)blockQ[0],(int32x4_t)blockQ[2]);
+	temp[1] = vtrnq_s32((int32x4_t)blockQ[1],(int32x4_t)blockQ[3]);
+
+	block[0].val[0] = vget_low_s16((int16x8_t)temp[0].val[0]);
+	block[0].val[1] = vget_high_s16((int16x8_t)temp[0].val[0]);
+
+	block[2].val[0] = vget_low_s16((int16x8_t)temp[0].val[1]);
+	block[2].val[1] = vget_high_s16((int16x8_t)temp[0].val[1]);
+
+	block[1].val[0] = vget_low_s16((int16x8_t)temp[1].val[0]);
+	block[1].val[1] = vget_high_s16((int16x8_t)temp[1].val[0]);
+
+	block[3].val[0] = vget_low_s16((int16x8_t)temp[1].val[1]);
+	block[3].val[1] = vget_high_s16((int16x8_t)temp[1].val[1]);
+
+	vst1_s16(dst, block[0].val[0]);
+	vst1_s16(dst+4, block[0].val[1]);
+	vst1_s16(dst+8, block[1].val[0]);
+	vst1_s16(dst+12, block[1].val[1]);
+	vst1_s16(dst+16, block[2].val[0]);
+	vst1_s16(dst+20, block[2].val[1]);
+	vst1_s16(dst+24, block[3].val[0]);
+	vst1_s16(dst+28, block[3].val[1]);
+
+	return;
+
+}
+
+
+
 /*
 	4x4 blocks DST and
 */

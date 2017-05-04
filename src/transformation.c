@@ -141,7 +141,7 @@ void inverseButterfly4(const int16_t* restrict src, int16_t* restrict dst, uint8
 */
 void butterfly8(const int16_t* restrict src, int16_t* restrict dst, uint8_t shift)
 {
-	int j, k;
+	int j;
 	int E[4], O[4];
 	int EE[2], EO[2];
 	int round = 1 << (shift - 1);

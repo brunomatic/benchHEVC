@@ -37,9 +37,9 @@ c1:	 	 .hword 90, 87, 80, 70,  57, 43, 25,  9
 c2:		 .hword 90, 88, 85, 82,  78, 73, 67, 61
          .hword 54, 46, 38, 31,  22, 13,  4, 00
 
-	.globl   dct32
-	.type    dct32,%function
-dct32:
+	.globl   dct32_16
+	.type    dct32_16,%function
+dct32_16:
 	.fnstart
 	push {r4, lr}
 	vpush	{q4-q7}

@@ -234,7 +234,7 @@ void printMatrix(int16_t * matrix, uint8_t size) {
 	{
 		for ( j = 0;  j  < size;  j ++)
 		{
-			printf("%d	", matrix[i*size + j]);
+			printf("%6d", matrix[i*size + j]);
 		}
 		printf("\n");
 	}

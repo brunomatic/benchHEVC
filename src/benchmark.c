@@ -30,7 +30,7 @@ void benchTransform(uint32_t numberOfIterations, uint8_t blockSize, uint8_t mode
 		start_time = get_time();
 
 		transform(mode, 8, blockSize, 1, random_residual, temp);
-		inverseTransform(mode, 8, blockSize, 1, temp, result);
+		//inverseTransform(mode, 8, blockSize, 1, temp, result);
 
 		end_time = get_time();
 

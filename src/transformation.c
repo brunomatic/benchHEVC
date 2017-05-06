@@ -3,7 +3,7 @@
 #include "common.h"
 #include "constants.h"
 
-#define USE_NEON_ASM 	0
+#define USE_NEON_ASM 	1
 #define USE_BUTTERFLY	1
 #define DEBUG 0
 
@@ -69,7 +69,7 @@ void inverseDST(const int16_t* restrict src, int16_t* restrict dst, uint8_t shif
 
 	int32_t c[4];
 	uint8_t i;
-	int16_t round = 1 << (shift - 1);
+	int32_t round = 1 << (shift - 1);
 
 	for (i = 0; i < 4; i++)
 	{
@@ -505,8 +505,12 @@ void transform(uint8_t predictionMode, uint8_t BitDepth, uint8_t nTbS, uint8_t c
 	// handle alternate DST transform of 4x4 blocks
 	if (predictionMode == MODE_INTRA && nTbS == 4) 
 	{
+#if USE_NEON_ASM
+		dst_4x4_neon(residual, result);
+#else
 		fastForwardDST(residual, temp, firstShift);
 		fastForwardDST(temp, result, secondShift);
+#endif
 	}
 	// handle everything else using butterfly algorithms from x265
 	else
@@ -538,8 +542,12 @@ void transform(uint8_t predictionMode, uint8_t BitDepth, uint8_t nTbS, uint8_t c
 #endif
 			break;
 		case 32:
+#if USE_NEON_ASM
+			dct_32x32_neon(residual, result);
+#else
 			butterfly32(residual, temp, firstShift, 32);
 			butterfly32(temp, result, secondShift, 32);
+#endif
 			break;
 		default:
 			break;
@@ -619,9 +627,10 @@ void transform(uint8_t predictionMode, uint8_t BitDepth, uint8_t nTbS, uint8_t c
 
 // debug printing
 #if DEBUG
+#if !USE_NEON_ASM
 	printf("Temp(1DCT) matrix:\n");
 	printMatrix(temp, nTbS);
-
+#endif
 	printf("Result(2DCT) matrix:\n");
 	printMatrix(result, nTbS);
 
@@ -762,9 +771,10 @@ void inverseTransform(uint8_t predictionMode, uint8_t BitDepth, uint8_t nTbS, ui
 #endif
 
 #if DEBUG
+#if !USE_NEON_ASM
 	printf("Temp(1DCT) matrix:\n");
 	printMatrix(temp, nTbS);
-
+#endif
 
 	printf("Result(2DCT) matrix:\n");
 	printMatrix(result, nTbS);

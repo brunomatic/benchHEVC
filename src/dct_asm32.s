@@ -17,7 +17,7 @@ dct32:
 	sub sp, #32*32*2		// make stack matrix buffer between first and second stage
     mov r12, sp				// stack matrix buffer iteration pointer
     mov r3, sp				// stack matrix buffer reference pointer
-    sub sp, #16*16			// make a buffer for temp vars of first two rows
+    sub sp, #30*16			// make a buffer for temp vars of first two rows
     mov r5, sp 				// stack temp buffer iteration pointer
     mov r4, sp				// stack temp buffer reference pointer
 	mov r7, r1				// dst reference pointer
@@ -54,10 +54,10 @@ dct32:
     vsubl.s16   q9, d1, d9      //  q9  => [O4 O6]
     vsubl.s16	q10, d2, d10	//	q10	=> [O8 O10]
     vsubl.s16   q11, d3, d11    //  q11 => [O12 O14]
-    vsubl.s16	q12, d4, d12	//	q12 => [O15 O13]
-    vsubl.s16   q13, d5, d13    //  q13 => [O11 O9]
-    vsubl.s16	q14, d6, d14	//	q14 => [O7 O5]
-    vsubl.s16   q15, d7, d15    //  q15 => [O3 O1]
+    vsubl.s16	q12, d12, d4	//	q12 => [O15 O13]
+    vsubl.s16   q13, d13, d5    //  q13 => [O11 O9]
+    vsubl.s16	q14, d14, d6	//	q14 => [O7 O5]
+    vsubl.s16   q15, d15, d7    //  q15 => [O3 O1]
 
 	// store to temp buffer
 	vstmia r5!, {q8-q15}
@@ -135,13 +135,13 @@ dct32:
     vsubl.s16   q9, d1, d9      //  q9  => [O4 O6]
     vsubl.s16	q10, d2, d10	//	q10	=> [O8 O10]
     vsubl.s16   q11, d3, d11    //  q11 => [O12 O14]
-    vsubl.s16	q12, d4, d12	//	q12 => [O15 O13]
-    vsubl.s16   q13, d5, d13    //  q13 => [O11 O9]
-    vsubl.s16	q14, d6, d14	//	q14 => [O7 O5]
-    vsubl.s16   q15, d7, d15    //  q15 => [O3 O1]
+    vsubl.s16	q12, d12, d4	//	q12 => [O15 O13]
+    vsubl.s16   q13, d13, d5    //  q13 => [O11 O9]
+    vsubl.s16	q14, d14, d6	//	q14 => [O7 O5]
+    vsubl.s16   q15, d15, d7	//  q15 => [O3 O1]
 
-	// store to stack
-	vpush {q8-q15}
+	// store to temp vars buffer
+	vstmia r5!, {q8-q15}
 
 	// E
     vaddl.s16    q8, d0, d8      //  q8 => [E0 E2]
@@ -165,8 +165,8 @@ dct32:
     vadd.s32    q2, q14, q10    //  q2  => [EE7 EE5]
     vadd.s32    q3, q15, q11    //  q3  => [EE3 EE1]
 
-	// store to stack
-    vpush {q4-q7}
+	// store to temp vars buffer
+    vstmia r5!, {q4-q7}
 
 	// EEE
 	vadd.s32	q8, q0, q2		//	q8 	=> [EEE0 EEE2]
@@ -185,12 +185,11 @@ dct32:
 	vsub.s32	d26, d16, d18	//	q13	=> [EEEO0 - ]
 	vsub.s32	d27, d19, d17	//	q13	=> [EEEO0 EEEO1]
 
-	// store EE0 to stack
-    vpush {q10-q11}
+	// store EE0 to temp vars buffer
+    vstmia r5!, {q10-q11}
 
 	// retrive EEEE and EEEO from temp buffer(first two rows)
-	mov r5, r4					// set temp buffer iterator
-	add r5, #14*16				// offset to EEEE and EEEO
+	add r5, r4, #14*16			// set offset to EEEE and EEEO
 	vldmia r5, {q14-q15}		// q14 => [EEEE0 EEEE1](0,1) q15 => [EEEO0 EEEO1](0,1)
 
 	//  q14 => [EEEE0 EEEE1](0,1)
@@ -242,10 +241,10 @@ dct32:
 
 
 	// retrive EEO from temp vars(0,1) buffer and EEO from stack(2,3)
-	mov r5, r4					// set temp buffer iterator
-	add r5, #12*16				// offset to EEO
+	add r5, r4, #12*16			// set offset to EEO
 	vldmia r5, {q14-q15}
-	vpop {q12, q13}
+	add r5, r4, #28*16
+	vldmia r5, {q12, q13}
 	//	q14 => [EEO0 EEO2](0,1)
 	//	q15	=> [EEO3 EEO1](0,1)
 	//	q12 => [EEO0 EEO2](2,3)
@@ -264,8 +263,7 @@ dct32:
 	// calc. 4, 12, 20, 28
 
 	mov lr, #32*2*8
-	mov r1, r7
-	add r1, #32*2*4
+	add r1, r7, #32*2*4
 
 	vmul.s32	q4, q14, d5[1]		// dst[4] = 89*EEO0
 	vmul.s32	q5, q14, d5[0]		// dst[12] = 75*EEO0
@@ -299,10 +297,10 @@ dct32:
 
 
 	// retrive EO from temp vars(0,1) buffer and EO from stack(2,3)
-	mov r5, r4					// set temp buffer iterator
-	add r5, #8*16				// offset to EO
+	add r5, r4, #8*16			// set offset to EO
 	vldmia r5, {q12-q15}
-	vpop {q8-q11}
+	add r5, r4, #24*16
+	vldmia r5, {q8-q11}
 
 	//	q12	=> [E00 E02](0,1)
 	//	q13	=> [E04 E06](0,1)
@@ -332,8 +330,7 @@ dct32:
 	// calc. 2, 6, 10, 14
 
 	mov lr, #32*2*4
-	mov r1, r7
-	add r1, #32*2*2
+	add r1, r7, #32*2*2
 
 	vmul.s32	q4, q12, d0[0]		//dst[2]  = 90*EO0
 	vmul.s32	q5, q12, d0[1]		//dst[6]  = 87*EO0
@@ -439,7 +436,8 @@ dct32:
 	// retrive O from temp vars(0,1) buffer and O from stack(2,3)
 	mov r5, r4					// set temp buffer iterator to O
 	vldmia r5, {q0-q7}
-	vpop {q8-q15}
+	add r5, r4, #16*16
+	vldmia r5, {q8-q15}
 
 	// (2,3)
 	//	q8	=> [O0 O2]
@@ -468,7 +466,8 @@ dct32:
 	// q8-q15=> O[2 6 4 0 3 7 5 1]
 
 	// make some room for calculation
-	vpush {q0-q7}
+	add r5, r4, #8*16
+	vstmia r4, {q0-q7}
 
 	// load coeffs
 	// q0 => [90, 88, 85, 82]
@@ -481,8 +480,7 @@ dct32:
 
 	// store offset and stride
 	mov lr, #32*2*2
-	mov r1, r7
-	add r1, #32*2*1
+	add r1, r7, #32*2*1
 
 	// free regs q5-q7
 	vmul.s32	q4, q11, d0[0]		//dst[1] = 90*O0
@@ -527,7 +525,7 @@ dct32:
 
 	// switch out vars
 	vstmia r5, {q8-q15}
-	vpop {q8-q15}
+	vldmia r4, {q8-q15}
 
 	vmla.s32	q4, q10, d3[1]		//dst[1] += 61*O8
 	vmls.s32	q5, q10, d2[1]		//dst[3] -= 73*O8
@@ -580,6 +578,297 @@ dct32:
 	vst1.16 {d11}, [r1], lr
 
 
+	// load O0-O7
+	vldmia r5, {q8-q15}
+
+	vmul.s32	q4, q11, d1[1]		//dst[9]  = 82*O0
+	vmul.s32	q5, q11, d2[0]		//dst[11] = 78*O0
+	vmul.s32	q6, q11, d2[1]		//dst[13] = 73*O0
+	vmul.s32	q7, q11, d3[0]		//dst[15] = 67*O0
+
+	vmla.s32	q4, q15, d6[0]		//dst[9]  += 22*O1
+	vmls.s32	q5, q15, d7[0]		//dst[11] -=  4*O1
+	vmls.s32	q6, q15, d5[1]		//dst[13] -= 31*O1
+	vmls.s32	q7, q15, d4[0]		//dst[15] -= 54*O1
+
+	vmls.s32	q4, q8, d4[0]		//dst[9]  -= 54*O2
+	vmls.s32	q5, q8, d1[1]		//dst[11] -= 82*O2
+	vmls.s32	q6, q8, d0[0]		//dst[13] -= 90*O2
+	vmls.s32	q7, q8, d2[0]		//dst[15] -= 78*O2
+
+	vmls.s32	q4, q12, d0[0]		//dst[9]  -= 90*O3
+	vmls.s32	q5, q12, d2[1]		//dst[11] -= 73*O3
+	vmls.s32	q6, q12, d6[0]		//dst[13] -= 22*O3
+	vmla.s32	q7, q12, d5[0]		//dst[15] += 38*O3
+
+	vmls.s32	q4, q10, d3[1]		//dst[9]  -= 61*O4
+	vmla.s32	q5, q10, d6[1]		//dst[11] += 13*O4
+	vmla.s32	q6, q10, d2[0]		//dst[13] += 78*O4
+	vmla.s32	q7, q10, d1[0]		//dst[15] += 85*O4
+
+	vmla.s32	q4, q14, d6[1]		//dst[9]  += 13*O5
+	vmla.s32	q5, q14, d1[0]		//dst[11] += 85*O5
+	vmla.s32	q6, q14, d3[0]		//dst[13] += 67*O5
+	vmls.s32	q7, q14, d6[0]		//dst[15] -= 22*O5
+
+	vmla.s32	q4, q9, d2[0]		//dst[9]  += 78*O6
+	vmla.s32	q5, q9, d3[0]		//dst[11] += 67*O6
+	vmls.s32	q6, q9, d5[0]		//dst[13] -= 38*O6
+	vmls.s32	q7, q9, d0[0]		//dst[15] -= 90*O6
+
+	vmla.s32	q4, q13, d1[0]		//dst[9]  += 85*O7
+	vmls.s32	q5, q13, d6[0]		//dst[11] -= 22*O7
+	vmls.s32	q6, q13, d0[0]		//dst[13] -= 90*O7
+	vmla.s32	q7, q13, d7[0]		//dst[15] +=  4*O7
+
+	// load O8-O15
+	vldmia r4, {q8-q15}
+
+	vmla.s32	q4, q10, d5[1]		//dst[9]  += 31*O8
+	vmls.s32	q5, q10, d0[1]		//dst[11] -= 88*O8
+	vmls.s32	q6, q10, d6[1]		//dst[13] -= 13*O8
+	vmla.s32	q7, q10, d0[0]		//dst[15] += 90*O8
+
+	vmls.s32	q4, q14, d4[1]		//dst[9]  -= 46*O9
+	vmls.s32	q5, q14, d3[1]		//dst[11] -= 61*O9
+	vmla.s32	q6, q14, d1[1]		//dst[13] += 82*O9
+	vmla.s32	q7, q14, d6[1]		//dst[15] += 13*O9
+
+	vmls.s32	q4, q9, d0[0]		//dst[9]  -= 90*O10
+	vmla.s32	q5, q9, d5[1]		//dst[11] += 31*O10
+	vmla.s32	q6, q9, d3[1]		//dst[13] += 61*O10
+	vmls.s32	q7, q9, d0[1]		//dst[15] -= 88*O10
+
+	vmls.s32	q4, q13, d3[0]		//dst[9]  -= 67*O11
+	vmla.s32	q5, q13, d0[0]		//dst[11] += 90*O11
+	vmls.s32	q6, q13, d4[1]		//dst[13] -= 46*O11
+	vmls.s32	q7, q13, d5[1]		//dst[15] -= 31*O11
+
+	vmla.s32	q4, q11, d7[0]		//dst[9]  +=  4*O12
+	vmla.s32	q5, q11, d4[0]		//dst[11] += 54*O12
+	vmls.s32	q6, q11, d0[1]		//dst[13] -= 88*O12
+	vmla.s32	q7, q11, d1[1]		//dst[15] += 82*O12
+
+	vmla.s32	q4, q15, d2[1]		//dst[9]  += 73*O13
+	vmls.s32	q5, q15, d5[0]		//dst[11] -= 38*O13
+	vmls.s32	q6, q15, d7[0]		//dst[13] -=  4*O13
+	vmla.s32	q7, q15, d4[1]		//dst[15] += 46*O13
+
+	vmla.s32	q4, q8, d0[1]		//dst[9]  += 88*O14
+	vmls.s32	q5, q8, d0[0]		//dst[11] -= 90*O14
+	vmla.s32	q6, q8, d1[0]		//dst[13] += 85*O14
+	vmls.s32	q7, q8, d2[1]		//dst[15] -= 73*O14
+
+	vmla.s32	q4, q12, d5[0]		//dst[9]  += 38*O15
+	vmls.s32	q5, q12, d4[1]		//dst[11] -= 46*O15
+	vmla.s32	q6, q12, d4[0]		//dst[13] += 54*O15
+	vmls.s32	q7, q12, d3[1]		//dst[15] -= 61*O15
+
+	vqrshrn.s32	d8, q4, #4			// d8 => dst[9]
+	vqrshrn.s32 d9, q5, #4			// d9 => dst[11]
+    vqrshrn.s32	d10, q6, #4			// d10 => dst[13]
+    vqrshrn.s32	d11, q7, #4			// d11 => dst[15]
+
+	vst1.16 {d8}, [r1], lr
+	vst1.16 {d9}, [r1], lr
+	vst1.16 {d10}, [r1], lr
+	vst1.16 {d11}, [r1], lr
+
+	// load O0-O7
+	vldmia r5, {q8-q15}
+
+	// calculate rows 17, 19, 21, 23 in parallel
+	vmul.s32	q4, q11, d3[1]		//dst[17] = 61*O0
+	vmul.s32	q5, q11, d4[0]		//dst[19] = 54*O0
+	vmul.s32	q6, q11, d4[1]		//dst[21] = 46*O0
+	vmul.s32	q7, q11, d5[0]		//dst[23] = 38*O0
+
+	vmls.s32	q4, q15, d2[1]		//dst[17] -= 73*O1
+	vmls.s32	q5, q15, d1[0]		//dst[19] -= 85*O1
+	vmls.s32	q6, q15, d0[0]		//dst[21] -= 90*O1
+	vmls.s32	q7, q15, d0[1]		//dst[23] -= 88*O1
+
+	vmls.s32	q4, q8, d4[1]		//dst[17] -= 46*O2
+	vmls.s32	q5, q8, d7[0]		//dst[19] -=  4*O2
+	vmla.s32	q6, q8, d5[0]		//dst[21] += 38*O2
+	vmla.s32	q7, q8, d2[1]		//dst[23] += 73*O2
+
+	vmla.s32	q4, q12, d1[1]		//dst[17] += 82*O3
+	vmla.s32	q5, q12, d0[1]		//dst[19] += 88*O3
+	vmla.s32	q6, q12, d4[0]		//dst[21] += 54*O3
+	vmls.s32	q7, q12, d7[0]		//dst[23] -=  4*O3
+
+	vmla.s32	q4, q10, d5[1]		//dst[17] += 31*O4
+	vmls.s32	q5, q10, d4[1]		//dst[19] -= 46*O4
+	vmls.s32	q6, q10, d0[0]		//dst[21] -= 90*O4
+	vmls.s32	q7, q10, d3[0]		//dst[23] -= 67*O4
+
+	vmls.s32	q4, q14, d0[1]		//dst[17] -= 88*O5
+	vmls.s32	q5, q14, d3[1]		//dst[19] -= 61*O5
+	vmla.s32	q6, q14, d5[1]		//dst[21] += 31*O5
+	vmla.s32	q7, q14, d0[0]		//dst[23] += 90*O5
+
+	vmls.s32	q4, q9, d6[1]		//dst[17] -= 13*O6
+	vmla.s32	q5, q9, d1[1]		//dst[19] += 82*O6
+	vmla.s32	q6, q9, d3[1]		//dst[21] += 61*O6
+	vmls.s32	q7, q9, d4[1]		//dst[23] -= 46*O6
+
+	vmla.s32	q4, q13, d0[0]		//dst[17] += 90*O7
+	vmla.s32	q5, q13, d6[1]		//dst[19] += 13*O7
+	vmls.s32	q6, q13, d0[1]		//dst[21] -= 88*O7
+	vmls.s32	q7, q13, d5[1]		//dst[23] -= 31*O7
+
+	// load O8-O15
+	vldmia r4, {q8-q15}
+
+	vmls.s32	q4, q10, d7[0]		//dst[17] -=  4*O8
+	vmls.s32	q5, q10, d0[0]		//dst[19] -= 90*O8
+	vmla.s32	q6, q10, d6[0]		//dst[21] += 22*O8
+	vmla.s32	q7, q10, d1[0]		//dst[23] += 85*O8
+
+	vmls.s32	q4, q14, d0[0]		//dst[17] -= 90*O9
+	vmla.s32	q5, q14, d5[0]		//dst[19] += 38*O9
+	vmla.s32	q6, q14, d3[0]		//dst[21] += 67*O9
+	vmls.s32	q7, q14, d2[0]		//dst[23] -= 78*O9
+
+	vmla.s32	q4, q9, d6[0]		//dst[17] += 22*O10
+	vmla.s32	q5, q9, d3[0]		//dst[19] += 67*O10
+	vmls.s32	q6, q9, d1[0]		//dst[21] -= 85*O10
+	vmla.s32	q7, q9, d6[1]		//dst[23] += 13*O10
+
+	vmla.s32	q4, q13, d1[0]		//dst[17] += 85*O11
+	vmls.s32	q5, q13, d2[0]		//dst[19] -= 78*O11
+	vmla.s32	q6, q13, d6[1]		//dst[21] += 13*O11
+	vmla.s32	q7, q13, d3[1]		//dst[23] += 61*O11
+
+	vmls.s32	q4, q11, d5[0]		//dst[17] -= 38*O12
+	vmls.s32	q5, q11, d6[0]		//dst[19] -= 22*O12
+	vmla.s32	q6, q11, d2[1]		//dst[21] += 73*O12
+	vmls.s32	q7, q11, d0[0]		//dst[23] -= 90*O12
+
+	vmls.s32	q4, q15, d2[0]		//dst[17] -= 78*O13
+	vmla.s32	q5, q15, d0[0]		//dst[19] += 90*O13
+	vmls.s32	q6, q15, d1[1]		//dst[21] -= 82*O13
+	vmla.s32	q7, q15, d4[0]		//dst[23] += 54*O13
+
+	vmla.s32	q4, q8, d4[0]		//dst[17] += 54*O14
+	vmls.s32	q5, q8, d5[1]		//dst[19] -= 31*O14
+	vmla.s32	q6, q8, d7[0]		//dst[21] +=  4*O14
+	vmla.s32	q7, q8, d6[0]		//dst[23] += 22*O14
+
+	vmla.s32	q4, q12, d3[0]		//dst[17] += 67*O15
+	vmls.s32	q5, q12, d2[1]		//dst[19] -= 73*O15
+	vmla.s32	q6, q12, d2[0]		//dst[21] += 78*O15
+	vmls.s32	q7, q12, d1[1]		//dst[23] -= 82*O15
+
+	vqrshrn.s32	d8, q4, #4			// d8 => dst[17]
+	vqrshrn.s32 d9, q5, #4			// d9 => dst[19]
+    vqrshrn.s32	d10, q6, #4			// d10 => dst[21]
+    vqrshrn.s32	d11, q7, #4			// d11 => dst[23]
+
+	vst1.16 {d8}, [r1], lr
+	vst1.16 {d9}, [r1], lr
+	vst1.16 {d10}, [r1], lr
+	vst1.16 {d11}, [r1], lr
+
+	// load O0-O7
+	vldmia r5, {q8-q15}
+
+	// calculate rows 25, 27, 29, 31 in parallel
+	vmul.s32	q4, q11, d5[1]		//dst[25] = 31*O0
+	vmul.s32	q5, q11, d6[0]		//dst[27] = 22*O0
+	vmul.s32	q6, q11, d6[1]		//dst[29] = 13*O0
+	vmul.s32	q7, q11, d7[0]		//dst[31] =  4*O0
+
+	vmls.s32	q4, q15, d2[0]		//dst[25] -= 78*O1
+	vmls.s32	q5, q15, d3[1]		//dst[27] -= 61*O1
+	vmls.s32	q6, q15, d5[1]		//dst[29] -= 38*O1
+	vmls.s32	q7, q15, d6[1]		//dst[31] -= 13*O1
+
+	vmla.s32	q4, q8, d0[0]		//dst[25] += 90*O2
+	vmla.s32	q5, q8, d1[0]		//dst[27] += 85*O2
+	vmla.s32	q6, q8, d3[1]		//dst[29] += 61*O2
+	vmla.s32	q7, q8, d6[0]		//dst[31] += 22*O2
+
+	vmls.s32	q4, q12, d3[1]		//dst[25] -= 61*O3
+	vmls.s32	q5, q12, d0[0]		//dst[27] -= 90*O3
+	vmls.s32	q6, q12, d2[0]		//dst[29] -= 78*O3
+	vmls.s32	q7, q12, d5[1]		//dst[31] -= 31*O3
+
+	vmla.s32	q4, q10, d7[0]		//dst[25] +=  4*O4
+	vmla.s32	q5, q10, d2[1]		//dst[27] += 73*O4
+	vmla.s32	q6, q10, d0[1]		//dst[29] += 88*O4
+	vmla.s32	q7, q10, d5[0]		//dst[31] += 38*O4
+
+	vmla.s32	q4, q14, d4[0]		//dst[25] += 54*O5
+	vmls.s32	q5, q14, d5[0]		//dst[27] -= 38*O5
+	vmls.s32	q6, q14, d0[0]		//dst[29] -= 90*O5
+	vmls.s32	q7, q14, d4[1]		//dst[31] -= 46*O5
+
+	vmls.s32	q4, q9, d0[1]		//dst[25] -= 88*O6
+	vmls.s32	q5, q9, d7[0]		//dst[27] -=  4*O6
+	vmla.s32	q6, q9, d1[0]		//dst[29] += 85*O6
+	vmla.s32	q7, q9, d4[0]		//dst[31] += 54*O6
+
+	vmla.s32	q4, q13, d1[1]		//dst[25] += 82*O7
+	vmla.s32	q5, q13, d4[1]		//dst[27] += 46*O7
+	vmls.s32	q6, q13, d2[1]		//dst[29] -= 73*O7
+	vmls.s32	q7, q13, d3[1]		//dst[31] -= 61*O7
+
+	// load O8-O15
+	vldmia r4, {q8-q15}
+
+	vmls.s32	q4, q10, d5[0]		//dst[25] -= 38*O8
+	vmls.s32	q5, q10, d2[0]		//dst[27] -= 78*O8
+	vmla.s32	q6, q10, d4[0]		//dst[29] += 54*O8
+	vmla.s32	q7, q10, d3[0]		//dst[31] += 67*O8
+
+	vmls.s32	q4, q14, d6[0]		//dst[25] -= 22*O9
+	vmla.s32	q5, q14, d0[0]		//dst[27] += 90*O9
+	vmls.s32	q6, q14, d5[1]		//dst[29] -= 31*O9
+	vmls.s32	q7, q14, d2[1]		//dst[31] -= 73*O9
+
+	vmla.s32	q4, q9, d2[1]		//dst[25] += 73*O10
+	vmls.s32	q5, q9, d1[1]		//dst[27] -= 82*O10
+	vmla.s32	q6, q9, d7[0]		//dst[29] +=  4*O10
+	vmla.s32	q7, q9, d2[0]		//dst[31] += 78*O10
+
+	vmls.s32	q4, q13, d0[0]		//dst[25] -= 90*O11
+	vmla.s32	q5, q13, d4[0]		//dst[27] += 54*O11
+	vmla.s32	q6, q13, d6[0]		//dst[29] += 22*O11
+	vmls.s32	q7, q13, d1[1]		//dst[31] -= 82*O11
+
+	vmla.s32	q4, q11, d3[0]		//dst[25] += 67*O12
+	vmls.s32	q5, q11, d6[1]		//dst[27] -= 13*O12
+	vmls.s32	q6, q11, d4[1]		//dst[29] -= 46*O12
+	vmla.s32	q7, q11, d1[0]		//dst[31] += 85*O12
+
+	vmls.s32	q4, q15, d6[1]		//dst[25] -= 13*O13
+	vmls.s32	q5, q15, d5[1]		//dst[27] -= 31*O13
+	vmla.s32	q6, q15, d3[0]		//dst[29] += 67*O13
+	vmls.s32	q7, q15, d0[1]		//dst[31] -= 88*O13
+
+	vmls.s32	q4, q8, d4[1]		//dst[25] -= 46*O14
+	vmla.s32	q5, q8, d3[0]		//dst[27] += 67*O14
+	vmls.s32	q6, q8, d1[1]		//dst[29] -= 82*O14
+	vmla.s32	q7, q8, d0[0]		//dst[31] += 90*O14
+
+	vmla.s32	q4, q12, d1[0]		//dst[25] += 85*O15
+	vmls.s32	q5, q12, d0[1]		//dst[27] -= 88*O15
+	vmla.s32	q6, q12, d0[0]		//dst[29] += 90*O15
+	vmls.s32	q7, q12, d0[0]		//dst[31] -= 90*O15
+
+	vqrshrn.s32	d8, q4, #4			// d8 => dst[25]
+	vqrshrn.s32 d9, q5, #4			// d9 => dst[27]
+    vqrshrn.s32	d10, q6, #4			// d10 => dst[29]
+    vqrshrn.s32	d11, q7, #4			// d11 => dst[31]
+
+	vst1.16 {d8}, [r1], lr
+	vst1.16 {d9}, [r1], lr
+	vst1.16 {d10}, [r1], lr
+	vst1.16 {d11}, [r1], lr
+
+
 	// next four columns have to be filled, increment offset
 	add r7, #4*2
 	mov r1, r7
@@ -588,7 +877,7 @@ dct32:
     bgt .loop1
 
 	add sp, #32*32*2		// stack buffer between first and second stage
-	add sp, #16*16
+	add sp, #30*16
 
 	vpop	{q4-q7}
 	pop	{r4, r5, r6, r7, lr}

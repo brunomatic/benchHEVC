@@ -13,18 +13,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define TESTS	1
+#define TESTS	0
 
 int main() {
 
-	int16_t * write, * read;
-	int8_t i,j ;
 	if (TESTS) {
-		//testInterpolation();
+		//testTransformation(32, MODE_INTER);
 		testTransformation(4, MODE_INTRA);
 	}
 
-	//benchTransform(5000000, 4, MODE_INTRA);
+	benchTransform(5000000, 4, MODE_INTRA);
 	//benchTransform(10000000, 4, MODE_INTER);
 	//benchTransform(500000, 8, MODE_INTER);
 	//benchTransform(100000, 16, MODE_INTER);

@@ -1,9 +1,8 @@
 #include "timing.h"
 
-
 /*
-	Hnadle different OS differently ;)
-*/
+ Handle different OS differently ;)
+ */
 #ifdef _WIN32
 
 #include <windows.h>
@@ -19,11 +18,10 @@ double get_time()
 
 #include <time.h>
 
-double get_time()
-{
+double get_time() {
 	struct timespec time;
-	clock_gettime(CLOCK_MONOTONIC , &time);
-	return time.tv_sec + time.tv_nsec*1e-9;
+	clock_gettime(CLOCK_MONOTONIC, &time);
+	return time.tv_sec + time.tv_nsec * 1e-9;
 }
 
 #endif

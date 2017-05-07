@@ -122,6 +122,100 @@ x265_dct_4x4_neon:
 
 .align 8
 
+	.globl  dst_4x4_1_neon
+	.type    dst_4x4_1_neon,%function
+
+dst_4x4_1_neon:
+	.fnstart
+    vld4.16	{d2-d5}, [r0]
+
+    // d2=> [0 4 8 12]
+    // d3=> [1 5 9 13]
+    // d4=> [2 6 10 14]
+    // d5=> [3 7 11 15]
+	vmov.s16 d31, #74
+
+	vaddl.s16 q4, d2, d5	// q4 => C1
+	vaddl.s16 q5, d3, d5	// q5 => C2
+	vsubl.s16 q6, d3, d2	// q6 => C3
+	vmull.s16 q7, d4, d31	// q7 => C4
+	vaddl.s16 q3, d2, d3
+	vsubw.s16 q3, q3, d5	// q3 => C0
+
+	vmov.s32 q8, #29		// q8  => 29
+	vmov.s32 q9, #74		// q9  => 74
+	vmov.s32 q10, #55		// q10 => 55
+	vmov.s32 q11, #84		// q11 => 84
+
+	vmul.s32 q12, q4, q8	// dst[0]	= 29*C1
+	vmul.s32 q13, q3, q9	// dst[4]	= 74*C0
+	vmul.s32 q14, q5, q10	// dst[8]	= 55*C2
+	vmov.s32 q15, q7		// dst[12]	= C4
+
+	vmla.s32 q12, q5, q10	// dst[0]	+= 55*C2
+	vmls.s32 q14, q6, q11	// dst[8]	-= 84*C3
+	vmls.s32 q15, q6, q11	// dst[12]	-= 84*C3
+
+	vadd.s32 q12, q12, q7	// dst[0]	+= C4
+	vsub.s32 q14, q14, q7	// dst[8]	+= C4
+	vmls.s32 q15, q4, q8	// dst[12]	-= 29*C1
+
+	vqrshrn.s32	d2, q12, #1			// d2 => dst[0]
+	vqrshrn.s32 d3, q13, #1			// d3 => dst[4]
+    vqrshrn.s32	d4, q14, #1			// d4 => dst[8]
+    vqrshrn.s32	d5, q15, #1			// d5 => dst[12]
+
+   // transpose for next pass
+    vtrn.16 d2, d3
+    vtrn.16	d4, d5
+    vtrn.32	d2, d4
+    vtrn.32 d3, d5
+
+    // d2=> [0 4 8 12]
+    // d3=> [1 5 9 13]
+    // d4=> [2 6 10 14]
+    // d5=> [3 7 11 15]
+	vmov.s16 d31, #74
+
+	vaddl.s16 q4, d2, d5	// q4 => C1
+	vaddl.s16 q5, d3, d5	// q5 => C2
+	vsubl.s16 q6, d3, d2	// q6 => C3
+	vmull.s16 q7, d4, d31	// q7 => C4
+	vaddl.s16 q3, d2, d3
+	vsubw.s16 q3, q3, d5	// q3 => C0
+
+	vmov.s32 q8, #29		// q8  => 29
+	vmov.s32 q9, #74		// q9  => 74
+	vmov.s32 q10, #55		// q10 => 55
+	vmov.s32 q11, #84		// q11 => 84
+
+	vmul.s32 q12, q4, q8	// dst[0]	= 29*C1
+	vmul.s32 q13, q3, q9	// dst[4]	= 74*C0
+	vmul.s32 q14, q5, q10	// dst[8]	= 55*C2
+	vmov.s32 q15, q7		// dst[12]	= C4
+
+	vmla.s32 q12, q5, q10	// dst[0]	+= 55*C2
+	vmls.s32 q14, q6, q11	// dst[8]	-= 84*C3
+	vmls.s32 q15, q6, q11	// dst[12]	-= 84*C3
+
+	vadd.s32 q12, q12, q7	// dst[0]	+= C4
+	vsub.s32 q14, q14, q7	// dst[8]	+= C4
+	vmls.s32 q15, q4, q8	// dst[12]	-= 29*C1
+
+	vqrshrn.s32	d2, q12, #8			// d2 => dst[0]
+	vqrshrn.s32 d3, q13, #8			// d3 => dst[4]
+    vqrshrn.s32	d4, q14, #8			// d4 => dst[8]
+    vqrshrn.s32	d5, q15, #8			// d5 => dst[12]
+
+	vst1.16 {d2-d5}, [r1]
+	bx lr
+.fnend
+
+.ltorg
+
+
+.align 8
+
 	.globl  dst_4x4_neon
 	.type    dst_4x4_neon,%function
 

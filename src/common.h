@@ -21,4 +21,6 @@
 #define		MODE_INTER	0
 #define		MODE_INTRA	1
 
+#define 	DEBUG 0
+
 #endif // !COMMON_HEADER

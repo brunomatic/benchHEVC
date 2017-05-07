@@ -1,4 +1,3 @@
-
 #include "tests.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -9,13 +8,12 @@
 #include "transformation.h"
 
 /*
-	Function for testing interpolation algorithm on a known pattern
-*/
-void testInterpolation()
-{
+ Function for testing interpolation algorithm on a known pattern
+ */
+void testInterpolation() {
 	image picture;
 	uint8_t nPbW = 4, nPbH = 4;
-	int16_t mvLX[2] = { 3 , 3 }, mvCLX[2] = { 4, 4 };
+	int16_t mvLX[2] = { 3, 3 }, mvCLX[2] = { 4, 4 };
 	uint32_t xPb = 1, yPb = 1;
 	predictionSample Luma, Cb, Cr;
 
@@ -29,7 +27,8 @@ void testInterpolation()
 
 	//printPlaneSegment(&picture, 8, 8, 1, 1, CR_PLANE);
 
-	fractionalInterpolation(&picture, xPb, yPb, nPbW, nPbH, mvLX, mvCLX, 1, &Luma, &Cb, &Cr);
+	fractionalInterpolation(&picture, xPb, yPb, nPbW, nPbH, mvLX, mvCLX, 1,
+			&Luma, &Cb, &Cr);
 
 	printMatrix(Luma.data, 4);
 
@@ -48,24 +47,21 @@ void testInterpolation()
 	return;
 }
 
-
 /*
-	Function for testing transformation algorithm on a known pattern
-*/
+ Function for testing transformation algorithm on a known pattern
+ */
 void testTransformation(uint8_t size, uint8_t mode) {
 
-	
 	int16_t *residual, *temp, *result;
 	uint8_t i, j;
 
-	residual = (int16_t *)malloc(sizeof(int16_t) * size * size);
-	result = (int16_t *)malloc(sizeof(int16_t) * size * size);
-	temp = (int16_t *)malloc(sizeof(int16_t) * size * size);
+	residual = (int16_t *) malloc(sizeof(int16_t) * size * size);
+	result = (int16_t *) malloc(sizeof(int16_t) * size * size);
+	temp = (int16_t *) malloc(sizeof(int16_t) * size * size);
 
-	for(i = 0; i < size; i++)
-	{
-		for(j = 0; j < size; j++){
-			residual[i*size + j] = -256 + (j%2);
+	for (i = 0; i < size; i++) {
+		for (j = 0; j < size; j++) {
+			residual[i * size + j] = -256 + (j % 2);
 		}
 	}
 
@@ -84,7 +80,6 @@ void testTransformation(uint8_t size, uint8_t mode) {
 	free(result);
 	free(temp);
 	free(residual);
-
 
 	return;
 

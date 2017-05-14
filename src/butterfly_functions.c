@@ -165,14 +165,14 @@ void inverseButterfly8(const int16_t* src, int16_t* dst, uint8_t shift) {
 	for (j = 0; j < 8; j++) {
 		/* Utilizing symmetry properties to the maximum to minimize the number of multiplications */
 		for (k = 0; k < 4; k++) {
-			O[k] = dctMatrix[4][k] * src[8] + dctMatrix[12][k] * src[24]
-					+ dctMatrix[20][k] * src[40] + dctMatrix[28][k] * src[56];
+			O[k] = dct8[1][k] * src[8] + dct8[3][k] * src[24]
+					+ dct8[5][k] * src[40] + dct8[7][k] * src[56];
 		}
 
-		EO[0] = dctMatrix[8][0] * src[16] + dctMatrix[24][0] * src[48];
-		EO[1] = dctMatrix[8][1] * src[16] + dctMatrix[24][1] * src[48];
-		EE[0] = dctMatrix[0][0] * src[0] + dctMatrix[16][0] * src[32];
-		EE[1] = dctMatrix[0][1] * src[0] + dctMatrix[16][1] * src[32];
+		EO[0] = dct8[2][0] * src[16] + dct8[6][0] * src[48];
+		EO[1] = dct8[2][1] * src[16] + dct8[6][1] * src[48];
+		EE[0] = dct8[0][0] * src[0] + dct8[4][0] * src[32];
+		EE[1] = dct8[0][1] * src[0] + dct8[4][1] * src[32];
 
 		/* Combining even and odd terms at each hierarchy levels to calculate the final spatial domain vector */
 		E[0] = EE[0] + EO[0];
@@ -194,14 +194,14 @@ void inverseButterfly8(const int16_t* src, int16_t* dst, uint8_t shift) {
 /*
  16x16 blocks DCT and iDCT
  */
-void butterfly16(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line) {
+void butterfly16(const int16_t* src, int16_t* dst, uint8_t shift) {
 	int j, k;
 	int E[8], O[8];
 	int EE[4], EO[4];
 	int EEE[2], EEO[2];
 	int round = 1 << (shift - 1);
 
-	for (j = 0; j < line; j++) {
+	for (j = 0; j < 16; j++) {
 		/* E and O */
 		for (k = 0; k < 8; k++) {
 			E[k] = src[k] + src[15 - k];
@@ -220,66 +220,65 @@ void butterfly16(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line) 
 		EEE[1] = EE[1] + EE[2];
 		EEO[1] = EE[1] - EE[2];
 
-		dst[0] = (int16_t) ((dctMatrix[0][0] * EEE[0] + dctMatrix[0][1] * EEE[1]
+		dst[0] = (int16_t) ((dct16[0][0] * EEE[0] + dct16[0][1] * EEE[1]
 				+ round) >> shift);
-		dst[8 * line] = (int16_t) ((dctMatrix[16][0] * EEE[0]
-				+ dctMatrix[16][1] * EEE[1] + round) >> shift);
-		dst[4 * line] = (int16_t) ((dctMatrix[8][0] * EEO[0]
-				+ dctMatrix[8][1] * EEO[1] + round) >> shift);
-		dst[12 * line] = (int16_t) ((dctMatrix[24][0] * EEO[0]
-				+ dctMatrix[24][1] * EEO[1] + round) >> shift);
+		dst[128] = (int16_t) ((dct16[8][0] * EEE[0]
+				+ dct16[8][1] * EEE[1] + round) >> shift);
+		dst[64] = (int16_t) ((dct16[4][0] * EEO[0]
+				+ dct16[4][1] * EEO[1] + round) >> shift);
+		dst[192] = (int16_t) ((dct16[12][0] * EEO[0]
+				+ dct16[12][1] * EEO[1] + round) >> shift);
 
 		for (k = 2; k < 16; k += 4) {
-			dst[k * line] = (int16_t) ((dctMatrix[k * 2][0] * EO[0]
-					+ dctMatrix[k * 2][1] * EO[1] + dctMatrix[k * 2][2] * EO[2]
-					+ dctMatrix[k * 2][3] * EO[3] + round) >> shift);
+			dst[k * 16] = (int16_t) ((dct16[k][0] * EO[0]
+					+ dct16[k][1] * EO[1] + dct16[k][2] * EO[2]
+					+ dct16[k][3] * EO[3] + round) >> shift);
 		}
 
 		for (k = 1; k < 16; k += 2) {
-			dst[k * line] = (int16_t) ((dctMatrix[k * 2][0] * O[0]
-					+ dctMatrix[k * 2][1] * O[1] + dctMatrix[k * 2][2] * O[2]
-					+ dctMatrix[k * 2][3] * O[3] + dctMatrix[k * 2][4] * O[4]
-					+ dctMatrix[k * 2][5] * O[5] + dctMatrix[k * 2][6] * O[6]
-					+ dctMatrix[k * 2][7] * O[7] + round) >> shift);
+			dst[k * 16] = (int16_t) ((dct16[k][0] * O[0]
+					+ dct16[k][1] * O[1] + dct16[k][2] * O[2]
+					+ dct16[k][3] * O[3] + dct16[k][4] * O[4]
+					+ dct16[k][5] * O[5] + dct16[k][6] * O[6]
+					+ dct16[k][7] * O[7] + round) >> shift);
 		}
 
 		src += 16;
 		dst++;
 	}
 }
-void inverseButterfly16(const int16_t* src, int16_t* dst, uint8_t shift,
-		uint8_t line) {
+void inverseButterfly16(const int16_t* src, int16_t* dst, uint8_t shift) {
 	int j, k;
 	int E[8], O[8];
 	int EE[4], EO[4];
 	int EEE[2], EEO[2];
 	int round = 1 << (shift - 1);
 
-	for (j = 0; j < line; j++) {
+	for (j = 0; j < 16; j++) {
 		/* Utilizing symmetry properties to the maximum to minimize the number of multiplications */
 		for (k = 0; k < 8; k++) {
-			O[k] = dctMatrix[2][k] * src[line] + dctMatrix[6][k] * src[3 * line]
-					+ dctMatrix[10][k] * src[5 * line]
-					+ dctMatrix[14][k] * src[7 * line]
-					+ dctMatrix[18][k] * src[9 * line]
-					+ dctMatrix[22][k] * src[11 * line]
-					+ dctMatrix[26][k] * src[13 * line]
-					+ dctMatrix[30][k] * src[15 * line];
+			O[k] = dct16[1][k] * src[16] + dct16[3][k] * src[48]
+					+ dct16[5][k] * src[80]
+					+ dct16[7][k] * src[112]
+					+ dct16[9][k] * src[144]
+					+ dct16[11][k] * src[176]
+					+ dct16[13][k] * src[208]
+					+ dct16[15][k] * src[240];
 		}
 
 		for (k = 0; k < 4; k++) {
-			EO[k] = dctMatrix[4][k] * src[2 * line]
-					+ dctMatrix[12][k] * src[6 * line]
-					+ dctMatrix[20][k] * src[10 * line]
-					+ dctMatrix[28][k] * src[14 * line];
+			EO[k] = dct16[2][k] * src[32]
+					+ dct16[6][k] * src[96]
+					+ dct16[10][k] * src[160]
+					+ dct16[14][k] * src[224];
 		}
 
-		EEO[0] = dctMatrix[8][0] * src[4 * line]
-				+ dctMatrix[24][0] * src[12 * line];
-		EEE[0] = dctMatrix[0][0] * src[0] + dctMatrix[16][0] * src[8 * line];
-		EEO[1] = dctMatrix[8][1] * src[4 * line]
-				+ dctMatrix[24][1] * src[12 * line];
-		EEE[1] = dctMatrix[0][1] * src[0] + dctMatrix[16][1] * src[8 * line];
+		EEO[0] = dct16[4][0] * src[64]
+				+ dct16[12][0] * src[192];
+		EEE[0] = dct16[0][0] * src[0] + dct16[8][0] * src[128];
+		EEO[1] = dct16[4][1] * src[64]
+				+ dct16[12][1] * src[192];
+		EEE[1] = dct16[0][1] * src[0] + dct16[8][1] * src[128];
 
 		/* Combining even and odd terms at each hierarchy levels to calculate the final spatial domain vector */
 		for (k = 0; k < 2; k++) {
@@ -307,7 +306,7 @@ void inverseButterfly16(const int16_t* src, int16_t* dst, uint8_t shift,
 /*
  32x32 blocks DCT and iDCT
  */
-void butterfly32(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line) {
+void butterfly32(const int16_t* src, int16_t* dst, uint8_t shift) {
 	int j, k;
 	int E[16], O[16];
 	int EE[8], EO[8];
@@ -315,7 +314,7 @@ void butterfly32(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line) 
 	int EEEE[2], EEEO[2];
 	int round = 1 << (shift - 1);
 
-	for (j = 0; j < line; j++) {
+	for (j = 0; j < 32; j++) {
 		/* E and O*/
 		for (k = 0; k < 16; k++) {
 			E[k] = src[k] + src[31 - k];
@@ -340,46 +339,45 @@ void butterfly32(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line) 
 		EEEE[1] = EEE[1] + EEE[2];
 		EEEO[1] = EEE[1] - EEE[2];
 
-		dst[0] = (int16_t) ((dctMatrix[0][0] * EEEE[0]
-				+ dctMatrix[0][1] * EEEE[1] + round) >> shift);
-		dst[16 * line] = (int16_t) ((dctMatrix[16][0] * EEEE[0]
-				+ dctMatrix[16][1] * EEEE[1] + round) >> shift);
-		dst[8 * line] = (int16_t) ((dctMatrix[8][0] * EEEO[0]
-				+ dctMatrix[8][1] * EEEO[1] + round) >> shift);
-		dst[24 * line] = (int16_t) ((dctMatrix[24][0] * EEEO[0]
-				+ dctMatrix[24][1] * EEEO[1] + round) >> shift);
+		dst[0] = (int16_t) ((dct32[0][0] * EEEE[0]
+				+ dct32[0][1] * EEEE[1] + round) >> shift);
+		dst[512] = (int16_t) ((dct32[16][0] * EEEE[0]
+				+ dct32[16][1] * EEEE[1] + round) >> shift);
+		dst[256] = (int16_t) ((dct32[8][0] * EEEO[0]
+				+ dct32[8][1] * EEEO[1] + round) >> shift);
+		dst[768] = (int16_t) ((dct32[24][0] * EEEO[0]
+				+ dct32[24][1] * EEEO[1] + round) >> shift);
 		for (k = 4; k < 32; k += 8) {
-			dst[k * line] = (int16_t) ((dctMatrix[k][0] * EEO[0]
-					+ dctMatrix[k][1] * EEO[1] + dctMatrix[k][2] * EEO[2]
-					+ dctMatrix[k][3] * EEO[3] + round) >> shift);
+			dst[k * 32] = (int16_t) ((dct32[k][0] * EEO[0]
+					+ dct32[k][1] * EEO[1] + dct32[k][2] * EEO[2]
+					+ dct32[k][3] * EEO[3] + round) >> shift);
 		}
 
 		for (k = 2; k < 32; k += 4) {
-			dst[k * line] = (int16_t) ((dctMatrix[k][0] * EO[0]
-					+ dctMatrix[k][1] * EO[1] + dctMatrix[k][2] * EO[2]
-					+ dctMatrix[k][3] * EO[3] + dctMatrix[k][4] * EO[4]
-					+ dctMatrix[k][5] * EO[5] + dctMatrix[k][6] * EO[6]
-					+ dctMatrix[k][7] * EO[7] + round) >> shift);
+			dst[k * 32] = (int16_t) ((dct32[k][0] * EO[0]
+					+ dct32[k][1] * EO[1] + dct32[k][2] * EO[2]
+					+ dct32[k][3] * EO[3] + dct32[k][4] * EO[4]
+					+ dct32[k][5] * EO[5] + dct32[k][6] * EO[6]
+					+ dct32[k][7] * EO[7] + round) >> shift);
 		}
 
 		for (k = 1; k < 32; k += 2) {
-			dst[k * line] = (int16_t) ((dctMatrix[k][0] * O[0]
-					+ dctMatrix[k][1] * O[1] + dctMatrix[k][2] * O[2]
-					+ dctMatrix[k][3] * O[3] + dctMatrix[k][4] * O[4]
-					+ dctMatrix[k][5] * O[5] + dctMatrix[k][6] * O[6]
-					+ dctMatrix[k][7] * O[7] + dctMatrix[k][8] * O[8]
-					+ dctMatrix[k][9] * O[9] + dctMatrix[k][10] * O[10]
-					+ dctMatrix[k][11] * O[11] + dctMatrix[k][12] * O[12]
-					+ dctMatrix[k][13] * O[13] + dctMatrix[k][14] * O[14]
-					+ dctMatrix[k][15] * O[15] + round) >> shift);
+			dst[k * 32] = (int16_t) ((dct32[k][0] * O[0]
+					+ dct32[k][1] * O[1] + dct32[k][2] * O[2]
+					+ dct32[k][3] * O[3] + dct32[k][4] * O[4]
+					+ dct32[k][5] * O[5] + dct32[k][6] * O[6]
+					+ dct32[k][7] * O[7] + dct32[k][8] * O[8]
+					+ dct32[k][9] * O[9] + dct32[k][10] * O[10]
+					+ dct32[k][11] * O[11] + dct32[k][12] * O[12]
+					+ dct32[k][13] * O[13] + dct32[k][14] * O[14]
+					+ dct32[k][15] * O[15] + round) >> shift);
 		}
 
 		src += 32;
 		dst++;
 	}
 }
-void inverseButterfly32(const int16_t* src, int16_t* dst, uint8_t shift,
-		uint8_t line) {
+void inverseButterfly32(const int16_t* src, int16_t* dst, uint8_t shift) {
 	int j, k;
 	int E[16], O[16];
 	int EE[8], EO[8];
@@ -387,50 +385,50 @@ void inverseButterfly32(const int16_t* src, int16_t* dst, uint8_t shift,
 	int EEEE[2], EEEO[2];
 	int round = 1 << (shift - 1);
 
-	for (j = 0; j < line; j++) {
+	for (j = 0; j < 32; j++) {
 		/* Utilizing symmetry properties to the maximum to minimize the number of multiplications */
 		for (k = 0; k < 16; k++) {
-			O[k] = dctMatrix[1][k] * src[line] + dctMatrix[3][k] * src[3 * line]
-					+ dctMatrix[5][k] * src[5 * line]
-					+ dctMatrix[7][k] * src[7 * line]
-					+ dctMatrix[9][k] * src[9 * line]
-					+ dctMatrix[11][k] * src[11 * line]
-					+ dctMatrix[13][k] * src[13 * line]
-					+ dctMatrix[15][k] * src[15 * line]
-					+ dctMatrix[17][k] * src[17 * line]
-					+ dctMatrix[19][k] * src[19 * line]
-					+ dctMatrix[21][k] * src[21 * line]
-					+ dctMatrix[23][k] * src[23 * line]
-					+ dctMatrix[25][k] * src[25 * line]
-					+ dctMatrix[27][k] * src[27 * line]
-					+ dctMatrix[29][k] * src[29 * line]
-					+ dctMatrix[31][k] * src[31 * line];
+			O[k] = dct32[1][k] * src[32] + dct32[3][k] * src[96]
+					+ dct32[5][k] * src[160]
+					+ dct32[7][k] * src[224]
+					+ dct32[9][k] * src[288]
+					+ dct32[11][k] * src[352]
+					+ dct32[13][k] * src[416]
+					+ dct32[15][k] * src[480]
+					+ dct32[17][k] * src[544]
+					+ dct32[19][k] * src[608]
+					+ dct32[21][k] * src[672]
+					+ dct32[23][k] * src[736]
+					+ dct32[25][k] * src[800]
+					+ dct32[27][k] * src[864]
+					+ dct32[29][k] * src[928]
+					+ dct32[31][k] * src[992];
 		}
 
 		for (k = 0; k < 8; k++) {
-			EO[k] = dctMatrix[2][k] * src[2 * line]
-					+ dctMatrix[6][k] * src[6 * line]
-					+ dctMatrix[10][k] * src[10 * line]
-					+ dctMatrix[14][k] * src[14 * line]
-					+ dctMatrix[18][k] * src[18 * line]
-					+ dctMatrix[22][k] * src[22 * line]
-					+ dctMatrix[26][k] * src[26 * line]
-					+ dctMatrix[30][k] * src[30 * line];
+			EO[k] = dct32[2][k] * src[64]
+					+ dct32[6][k] * src[192]
+					+ dct32[10][k] * src[320]
+					+ dct32[14][k] * src[448]
+					+ dct32[18][k] * src[576]
+					+ dct32[22][k] * src[704]
+					+ dct32[26][k] * src[832]
+					+ dct32[30][k] * src[960];
 		}
 
 		for (k = 0; k < 4; k++) {
-			EEO[k] = dctMatrix[4][k] * src[4 * line]
-					+ dctMatrix[12][k] * src[12 * line]
-					+ dctMatrix[20][k] * src[20 * line]
-					+ dctMatrix[28][k] * src[28 * line];
+			EEO[k] = dct32[4][k] * src[128]
+					+ dct32[12][k] * src[384]
+					+ dct32[20][k] * src[640]
+					+ dct32[28][k] * src[896];
 		}
 
-		EEEO[0] = dctMatrix[8][0] * src[8 * line]
-				+ dctMatrix[24][0] * src[24 * line];
-		EEEO[1] = dctMatrix[8][1] * src[8 * line]
-				+ dctMatrix[24][1] * src[24 * line];
-		EEEE[0] = dctMatrix[0][0] * src[0] + dctMatrix[16][0] * src[16 * line];
-		EEEE[1] = dctMatrix[0][1] * src[0] + dctMatrix[16][1] * src[16 * line];
+		EEEO[0] = dct32[8][0] * src[256]
+				+ dct32[24][0] * src[768];
+		EEEO[1] = dct32[8][1] * src[256]
+				+ dct32[24][1] * src[768];
+		EEEE[0] = dct32[0][0] * src[0] + dct32[16][0] * src[512];
+		EEEE[1] = dct32[0][1] * src[0] + dct32[16][1] * src[512];
 
 		/* Combining even and odd terms at each hierarchy levels to calculate the final spatial domain vector */
 		EEE[0] = EEEE[0] + EEEO[0];

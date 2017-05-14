@@ -16,12 +16,10 @@ void inverseButterfly4(const int16_t* src, int16_t* dst, uint8_t shift);
 void butterfly8(const int16_t* src, int16_t* dst, uint8_t shift);
 void inverseButterfly8(const int16_t* src, int16_t* dst, uint8_t shift);
 
-void butterfly16(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line);
-void inverseButterfly16(const int16_t* src, int16_t* dst, uint8_t shift,
-		uint8_t line);
+void butterfly16(const int16_t* src, int16_t* dst, uint8_t shift);
+void inverseButterfly16(const int16_t* src, int16_t* dst, uint8_t shift);
 
-void butterfly32(const int16_t* src, int16_t* dst, uint8_t shift, uint8_t line);
-void inverseButterfly32(const int16_t* src, int16_t* dst, uint8_t shift,
-		uint8_t line);
+void butterfly32(const int16_t* src, int16_t* dst, uint8_t shift);
+void inverseButterfly32(const int16_t* src, int16_t* dst, uint8_t shift);
 
 #endif

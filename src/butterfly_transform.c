@@ -61,12 +61,12 @@ void transform_butterfly(uint8_t predictionMode, uint8_t BitDepth, uint8_t nTbS,
 			butterfly8(temp, result, secondShift);
 			break;
 		case 16:
-			butterfly16(residual, temp, firstShift, 16);
-			butterfly16(temp, result, secondShift, 16);
+			butterfly16(residual, temp, firstShift);
+			butterfly16(temp, result, secondShift);
 			break;
 		case 32:
-			butterfly32(residual, temp, firstShift, 32);
-			butterfly32(temp, result, secondShift, 32);
+			butterfly32(residual, temp, firstShift);
+			butterfly32(temp, result, secondShift);
 			break;
 		default:
 			break;
@@ -118,12 +118,12 @@ void inverseTransform_butterfly(uint8_t predictionMode, uint8_t BitDepth,
 			inverseButterfly8(temp, result, secondShift);
 			break;
 		case 16:
-			inverseButterfly16(transform, temp, firstShift, 16);
-			inverseButterfly16(temp, result, secondShift, 16);
+			inverseButterfly16(transform, temp, firstShift);
+			inverseButterfly16(temp, result, secondShift);
 			break;
 		case 32:
-			inverseButterfly32(transform, temp, firstShift, 32);
-			inverseButterfly32(temp, result, secondShift, 32);
+			inverseButterfly32(transform, temp, firstShift);
+			inverseButterfly32(temp, result, secondShift);
 			break;
 		default:
 			break;

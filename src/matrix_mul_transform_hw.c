@@ -1,37 +1,32 @@
-#include "matrix_mul_transform.h"
+#include "matrix_mul_transform_hw.h"
+#include "matrix_mul_functions_hw.h"
 #include "matrix_mul_functions.h"
 #include <stdlib.h>
 #include "common.h"
 #include "constants.h"
+#include <sds_lib.h>
 
 /*
  * Function implements forward transform using matrix multiplication
  */
-void transform_matrix_mul(uint8_t predictionMode, uint8_t BitDepth,
+void transform_matrix_mul_hw(uint8_t predictionMode, uint8_t BitDepth,
 		uint8_t nTbS, uint8_t cIdx, int16_t * residual, int16_t * result) {
 	uint8_t firstShift = 0, secondShift = 0;
 	int16_t * temp;
 
-	temp = (int16_t *) calloc(sizeof(int16_t), nTbS * nTbS);
+	//temp = (int16_t *)sds_alloc(sizeof(int16_t)* nTbS * nTbS);
 
 	// set shift variable based on block size and bit depth
 	switch (nTbS) {
 	case 4:
-		firstShift = BitDepth + 2 - 9;
-		secondShift = 2 + 6;
 		if (predictionMode == MODE_INTRA) {
-			mmul_shr(&dst4, residual, temp, nTbS, firstShift);
-			mmul_shr_transpose_second(temp, &dst4, result, nTbS, secondShift);
+			transform_4_hw(&dst4, residual, result);
 		} else {
-			mmul_shr(&dct4, residual, temp, nTbS, firstShift);
-			mmul_shr_transpose_second(temp, &dct4, result, nTbS, secondShift);
+			transform_4_hw(&dct4, residual, result);
 		}
 		break;
 	case 8:
-		firstShift = BitDepth + 3 - 9;
-		secondShift = 3 + 6;
-		mmul_shr(&dct8, residual, temp, nTbS, firstShift);
-		mmul_shr_transpose_second(temp, &dct8, result, nTbS, secondShift);
+		transform_8_hw(&dct8, residual, result);
 		break;
 	case 16:
 		firstShift = BitDepth + 4 - 9;
@@ -40,10 +35,7 @@ void transform_matrix_mul(uint8_t predictionMode, uint8_t BitDepth,
 		mmul_shr_transpose_second(temp, &dct16, result, nTbS, secondShift);
 		break;
 	case 32:
-		firstShift = BitDepth + 5 - 9;
-		secondShift = 5 + 6;
-		mmul_shr(&dct32, residual, temp, nTbS, firstShift);
-		mmul_shr_transpose_second(temp, &dct32, result, nTbS, secondShift);
+		transform_32_hw(&dct32, residual, result);
 		break;
 	default:
 		break;
@@ -51,8 +43,6 @@ void transform_matrix_mul(uint8_t predictionMode, uint8_t BitDepth,
 
 // debug printing
 #if DEBUG
-	printf("Temp(1DCT) matrix:\n");
-	printMatrix(temp, nTbS);
 	printf("Result(2DCT) matrix:\n");
 	printMatrix(result, nTbS);
 
@@ -67,7 +57,7 @@ void transform_matrix_mul(uint8_t predictionMode, uint8_t BitDepth,
 /*
  *	Function implements inverse transformation using matrix multiplication
  */
-void inverseTransform_matrix_mul(uint8_t predictionMode, uint8_t BitDepth,
+void inverseTransform_matrix_mul_hw(uint8_t predictionMode, uint8_t BitDepth,
 		uint8_t nTbS, uint8_t cIdx, int16_t * transform, int16_t * result) {
 
 	uint8_t firstShift, secondShift;
@@ -105,8 +95,6 @@ void inverseTransform_matrix_mul(uint8_t predictionMode, uint8_t BitDepth,
 	}
 
 #if DEBUG
-	printf("Temp(1DCT) matrix:\n");
-	printMatrix(temp, nTbS);
 	printf("Result(2DCT) matrix:\n");
 	printMatrix(result, nTbS);
 #endif

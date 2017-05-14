@@ -6,6 +6,7 @@
 #include "helper.h"
 #include "interpolation.h"
 #include "transformation.h"
+#include "sds_lib.h"
 
 /*
  Function for testing interpolation algorithm on a known pattern
@@ -55,13 +56,13 @@ void testTransformation(uint8_t size, uint8_t mode) {
 	int16_t *residual, *temp, *result;
 	uint8_t i, j;
 
-	residual = (int16_t *) malloc(sizeof(int16_t) * size * size);
-	result = (int16_t *) malloc(sizeof(int16_t) * size * size);
-	temp = (int16_t *) malloc(sizeof(int16_t) * size * size);
+	residual = (int16_t *) sds_alloc(sizeof(int16_t) * size * size);
+	result = (int16_t *) sds_alloc(sizeof(int16_t) * size * size);
+	temp = (int16_t *) sds_alloc(sizeof(int16_t) * size * size);
 
 	for (i = 0; i < size; i++) {
 		for (j = 0; j < size; j++) {
-			residual[i * size + j] = -256 + (j % 2);
+			residual[i * size + j] = -256 ;//+ (j % 2);
 		}
 	}
 
@@ -77,9 +78,9 @@ void testTransformation(uint8_t size, uint8_t mode) {
 	printf("Reconstructed block:\n");
 	printMatrix(result, size);
 
-	free(result);
-	free(temp);
-	free(residual);
+	sds_free(result);
+	sds_free(temp);
+	sds_free(residual);
 
 	return;
 

@@ -2481,7 +2481,8 @@ dct_32x32_neon:
 	// store offset and stride
 	mov lr, #32*2*2
 	add r1, r3, #32*2*1
-
+	pldw [r5]
+	pld [r4]
 	// free regs q5-q7
 	vmul.s32	q4, q11, d0[0]		//dst[1] = 90*O0
 	vmul.s32	q5, q11, d0[0]		//dst[3] = 90*O0
@@ -2526,6 +2527,7 @@ dct_32x32_neon:
 	// switch out vars
 	vstmia r5, {q8-q15}
 	vldmia r4, {q8-q15}
+	pld [r5]
 
 	vmla.s32	q4, q10, d3[1]		//dst[1] += 61*O8
 	vmls.s32	q5, q10, d2[1]		//dst[3] -= 73*O8
@@ -2580,6 +2582,7 @@ dct_32x32_neon:
 
 	// load O0-O7
 	vldmia r5, {q8-q15}
+	pld [r4]
 
 	vmul.s32	q4, q11, d1[1]		//dst[9]  = 82*O0
 	vmul.s32	q5, q11, d2[0]		//dst[11] = 78*O0
@@ -2623,6 +2626,7 @@ dct_32x32_neon:
 
 	// load O8-O15
 	vldmia r4, {q8-q15}
+	pld [r5]
 
 	vmla.s32	q4, q10, d5[1]		//dst[9]  += 31*O8
 	vmls.s32	q5, q10, d0[1]		//dst[11] -= 88*O8
@@ -2676,6 +2680,7 @@ dct_32x32_neon:
 
 	// load O0-O7
 	vldmia r5, {q8-q15}
+	pld [r4]
 
 	// calculate rows 17, 19, 21, 23 in parallel
 	vmul.s32	q4, q11, d3[1]		//dst[17] = 61*O0
@@ -2720,6 +2725,7 @@ dct_32x32_neon:
 
 	// load O8-O15
 	vldmia r4, {q8-q15}
+	pld [r5]
 
 	vmls.s32	q4, q10, d7[0]		//dst[17] -=  4*O8
 	vmls.s32	q5, q10, d0[0]		//dst[19] -= 90*O8
@@ -2773,6 +2779,7 @@ dct_32x32_neon:
 
 	// load O0-O7
 	vldmia r5, {q8-q15}
+	pld [r4]
 
 	// calculate rows 25, 27, 29, 31 in parallel
 	vmul.s32	q4, q11, d5[1]		//dst[25] = 31*O0

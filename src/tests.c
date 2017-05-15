@@ -5,7 +5,11 @@
 #include "common.h"
 #include "helper.h"
 #include "interpolation.h"
-#include "transformation.h"
+#include "neon_transform.h"
+#include "butterfly_transform.h"
+#include "butterfly_transform_hw.h"
+#include "matrix_mul_transform.h"
+#include "matrix_mul_transform_hw.h"
 #include "sds_lib.h"
 
 /*
@@ -49,9 +53,9 @@ void testInterpolation() {
 }
 
 /*
- Function for testing transformation algorithm on a known pattern
+ Function for testing transformation algorithm
  */
-void testTransformation(uint8_t size, uint8_t mode) {
+void testTransformation(uint8_t size, uint8_t mode, uint8_t implementation) {
 
 	int16_t *residual, *temp, *result;
 	uint8_t i, j;
@@ -68,12 +72,31 @@ void testTransformation(uint8_t size, uint8_t mode) {
 
 	printf("Residual block:\n");
 	printMatrix(residual, size);
-	transform(mode, 8, size, 1, residual, temp);
+
+	switch(implementation){
+	case MATRIX_MUL:
+		transform_matrix_mul(mode, 8, size, 1, residual, temp);
+		break;
+	case BUTTERFLY:
+		transform_butterfly(mode, 8, size, 1, residual, temp);
+		break;
+	case NEON:
+		transform_neon(mode, 8, size, 1, residual, temp);
+		break;
+	case MATRIX_MUL_HW:
+		transform_matrix_mul_hw(mode, 8, size, 1, residual, temp);
+		break;
+	case BUTTERFLY_HW:
+		transform_butterfly_hw(mode, 8, size, 1, residual, temp);
+		break;
+	default:
+		transform_matrix_mul(mode, 8, size, 1, residual, temp);
+	}
 
 	printf("2D DCT block:\n");
 	printMatrix(temp, size);
 
-	inverseTransform(mode, 8, size, 1, temp, result);
+	inverseTransform_butterfly(mode, 8, size, 1, temp, result);
 
 	printf("Reconstructed block:\n");
 	printMatrix(result, size);

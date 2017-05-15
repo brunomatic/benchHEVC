@@ -23,4 +23,10 @@
 
 #define 	DEBUG 0
 
+#define MATRIX_MUL		0
+#define BUTTERFLY		1
+#define NEON			2
+#define MATRIX_MUL_HW	3
+#define BUTTERFLY_HW	4
+
 #endif // !COMMON_HEADER

@@ -7,13 +7,14 @@
 #include "butterfly_transform.h"
 #include "matrix_mul_transform.h"
 #include "matrix_mul_transform_hw.h"
+#include "butterfly_transform_hw.h"
 #include "interpolation.h"
 #include "sds_lib.h"
 
 void benchTransform(uint32_t numberOfIterations, uint8_t blockSize,
 		uint8_t mode) {
 
-	uint64_t start_cnt, end_cnt, total_cnt = 0, stats[4];
+	uint64_t start_cnt, end_cnt, total_cnt = 0, stats[5];
 	volatile uint32_t i;
 
 	int16_t * random_residual;
@@ -83,7 +84,7 @@ void benchTransform(uint32_t numberOfIterations, uint8_t blockSize,
 	}
 	stats[2] = total_cnt;
 	total_cnt = 0;
-	// HW acceleration
+	// HW acceleration - matrix multiplication
 	for (i = 0; i < numberOfIterations; i++) {
 
 		generateResidual(blockSize, random_residual);
@@ -101,16 +102,36 @@ void benchTransform(uint32_t numberOfIterations, uint8_t blockSize,
 
 	}
 	stats[3] = total_cnt;
+	total_cnt = 0;
+		// HW acceleration - butterfly algorithm
+		for (i = 0; i < numberOfIterations; i++) {
+
+			generateResidual(blockSize, random_residual);
+
+			start_cnt = sds_clock_counter();
+
+			transform_butterfly_hw(mode, 8, blockSize, 1, random_residual, temp);
+
+			end_cnt = sds_clock_counter();
+
+			total_cnt +=
+					(end_cnt > start_cnt) ?
+							(end_cnt - start_cnt) :
+							((UINT64_MAX - start_cnt) + end_cnt);
+
+		}
+		stats[4] = total_cnt;
 
 	sds_free(result);
 	sds_free(temp);
 	sds_free(random_residual);
 
 	printf("Average cpu cycles:\n");
-	printf("\t MATRIX_MUL:%.10f\n", (float)(stats[0] / numberOfIterations));
-	printf("\t BUTTERFLY:%.10f\n", (float)(stats[1] / numberOfIterations));
-	printf("\t NEON:%.10f\n", (float)(stats[2] / numberOfIterations));
-	printf("\t HW acc.:%.10f\n", (float)(stats[3] / numberOfIterations));
+	printf("\t MATRIX_MUL:%.2f\n", (float)(stats[0] / numberOfIterations));
+	printf("\t BUTTERFLY:%.2f\n", (float)(stats[1] / numberOfIterations));
+	printf("\t NEON:%.2f\n", (float)(stats[2] / numberOfIterations));
+	printf("\t MATRIX_MUL_HW:%.2f\n", (float)(stats[3] / numberOfIterations));
+	printf("\t BUTTERFLY_HW:%.2f\n", (float)(stats[4] / numberOfIterations));
 
 }
 

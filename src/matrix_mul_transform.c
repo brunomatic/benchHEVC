@@ -20,30 +20,30 @@ void transform_matrix_mul(uint8_t predictionMode, uint8_t BitDepth,
 		firstShift = BitDepth + 2 - 9;
 		secondShift = 2 + 6;
 		if (predictionMode == MODE_INTRA) {
-			mmul_shr(&dst4, residual, temp, nTbS, firstShift);
-			mmul_shr_transpose_second(temp, &dst4, result, nTbS, secondShift);
+			mmul_shr((int16_t *)&dst4, residual, temp, nTbS, firstShift);
+			mmul_shr_transpose_second(temp, (int16_t *)&dst4, result, nTbS, secondShift);
 		} else {
-			mmul_shr(&dct4, residual, temp, nTbS, firstShift);
-			mmul_shr_transpose_second(temp, &dct4, result, nTbS, secondShift);
+			mmul_shr((int16_t *)&dct4, residual, temp, nTbS, firstShift);
+			mmul_shr_transpose_second(temp, (int16_t *)&dct4, result, nTbS, secondShift);
 		}
 		break;
 	case 8:
 		firstShift = BitDepth + 3 - 9;
 		secondShift = 3 + 6;
-		mmul_shr(&dct8, residual, temp, nTbS, firstShift);
-		mmul_shr_transpose_second(temp, &dct8, result, nTbS, secondShift);
+		mmul_shr((int16_t *)&dct8, residual, temp, nTbS, firstShift);
+		mmul_shr_transpose_second(temp, (int16_t *)&dct8, result, nTbS, secondShift);
 		break;
 	case 16:
 		firstShift = BitDepth + 4 - 9;
 		secondShift = 4 + 6;
-		mmul_shr(&dct16, residual, temp, nTbS, firstShift);
-		mmul_shr_transpose_second(temp, &dct16, result, nTbS, secondShift);
+		mmul_shr((int16_t *)&dct16, residual, temp, nTbS, firstShift);
+		mmul_shr_transpose_second(temp, (int16_t *)&dct16, result, nTbS, secondShift);
 		break;
 	case 32:
 		firstShift = BitDepth + 5 - 9;
 		secondShift = 5 + 6;
-		mmul_shr(&dct32, residual, temp, nTbS, firstShift);
-		mmul_shr_transpose_second(temp, &dct32, result, nTbS, secondShift);
+		mmul_shr((int16_t *)&dct32, residual, temp, nTbS, firstShift);
+		mmul_shr_transpose_second(temp, (int16_t *)&dct32, result, nTbS, secondShift);
 		break;
 	default:
 		break;
@@ -81,24 +81,24 @@ void inverseTransform_matrix_mul(uint8_t predictionMode, uint8_t BitDepth,
 	switch (nTbS) {
 	case 4:
 		if (predictionMode == MODE_INTRA) {
-			mmul_shr_transpose_first(&dst4, transform, temp, nTbS, firstShift);
-			mmul_shr(temp, &dst4, result, nTbS, secondShift);
+			mmul_shr_transpose_first((int16_t *)&dst4, transform, temp, nTbS, firstShift);
+			mmul_shr(temp, (int16_t *)&dst4, result, nTbS, secondShift);
 		} else {
-			mmul_shr_transpose_first(&dct4, transform, temp, nTbS, firstShift);
-			mmul_shr(temp, &dct4, result, nTbS, secondShift);
+			mmul_shr_transpose_first((int16_t *)&dct4, transform, temp, nTbS, firstShift);
+			mmul_shr(temp, (int16_t *)&dct4, result, nTbS, secondShift);
 		}
 		break;
 	case 8:
-		mmul_shr_transpose_first(&dct8, transform, temp, nTbS, firstShift);
-		mmul_shr(temp, &dct8, result, nTbS, secondShift);
+		mmul_shr_transpose_first((int16_t *)&dct8, transform, temp, nTbS, firstShift);
+		mmul_shr(temp, (int16_t *)&dct8, result, nTbS, secondShift);
 		break;
 	case 16:
-		mmul_shr_transpose_first(&dct16, transform, temp, nTbS, firstShift);
-		mmul_shr(temp, &dct16, result, nTbS, secondShift);
+		mmul_shr_transpose_first((int16_t *)&dct16, transform, temp, nTbS, firstShift);
+		mmul_shr(temp, (int16_t *)&dct16, result, nTbS, secondShift);
 		break;
 	case 32:
-		mmul_shr_transpose_first(&dct32, transform, temp, nTbS, firstShift);
-		mmul_shr(temp, &dct32, result, nTbS, secondShift);
+		mmul_shr_transpose_first((int16_t *)&dct32, transform, temp, nTbS, firstShift);
+		mmul_shr(temp, (int16_t *)&dct32, result, nTbS, secondShift);
 		break;
 	default:
 		break;

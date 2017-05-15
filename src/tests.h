@@ -5,6 +5,6 @@
 
 void testInterpolation();
 
-void testTransformation(uint8_t size, uint8_t mode);
+void testTransformation(uint8_t size, uint8_t mode, uint8_t implementation);
 
 #endif // !TESTS_HEADER

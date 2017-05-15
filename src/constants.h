@@ -3,9 +3,9 @@
 
 #include "types.h"
 
-extern const int16_t dst4[4*4];
+extern const int16_t dst4[4][4];
 
-extern const int16_t dct4[4*4];
+extern const int16_t dct4[4][4];
 
 extern const int16_t dct8[8][8];
 

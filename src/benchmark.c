@@ -85,7 +85,7 @@ void benchTransform(uint32_t numberOfIterations, uint8_t blockSize,
 	stats[2] = total_cnt;
 	total_cnt = 0;
 	// HW acceleration - matrix multiplication
-	for (i = 0; i < numberOfIterations; i++) {
+	/*for (i = 0; i < numberOfIterations; i++) {
 
 		generateResidual(blockSize, random_residual);
 
@@ -100,7 +100,7 @@ void benchTransform(uint32_t numberOfIterations, uint8_t blockSize,
 						(end_cnt - start_cnt) :
 						((UINT64_MAX - start_cnt) + end_cnt);
 
-	}
+	}*/
 	stats[3] = total_cnt;
 	total_cnt = 0;
 		// HW acceleration - butterfly algorithm

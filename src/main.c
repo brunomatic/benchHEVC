@@ -12,17 +12,19 @@
 int main() {
 
 	if (TESTS) {
-		testTransformation(4, MODE_INTRA, BUTTERFLY_HW);
-		testTransformation(4, MODE_INTER, BUTTERFLY_HW);
-		//testTransformation(8, MODE_INTER);
-		//testTransformation(32, MODE_INTER);
+
+		//testTransformation(4, MODE_INTRA, BUTTERFLY_HW);
+		//testTransformation(4, MODE_INTER, BUTTERFLY_HW);
+		//testTransformation(8, MODE_INTER, BUTTERFLY_HW);
+		//testTransformation(16, MODE_INTER, BUTTERFLY_HW);
+		testTransformation(32, MODE_INTER, BUTTERFLY_HW);
 	}
 
-	benchTransform(50000, 4, MODE_INTRA);
-	benchTransform(100000, 4, MODE_INTER);
-	//benchTransform(5000, 8, MODE_INTER);
+	//benchTransform(1000, 4, MODE_INTRA);
+	//benchTransform(1000, 4, MODE_INTER);
+	//benchTransform(500, 8, MODE_INTER);
 	//benchTransform(1000, 16, MODE_INTER);
-	//benchTransform(100, 32, MODE_INTER);
+	benchTransform(100, 32, MODE_INTER);
 
 	return 0;
 }
